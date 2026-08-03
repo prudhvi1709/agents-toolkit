@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "./scripts/statusline-command.sh"
+  },
+  "hooks": {
+    "enabled": false,
+    "command": "./hooks/status-hook.sh"
+  }
+}
+
