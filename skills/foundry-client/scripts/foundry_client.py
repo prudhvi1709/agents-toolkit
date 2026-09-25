@@ -1,23 +1,23 @@
 """
-foundry_client: one shared client for the Straive LLM Foundry proxy.
+foundry_client: one shared client for an OpenAI-compatible LLM proxy.
 
-Replaces the ~67 hand-rolled Foundry integrations across projects with a single,
-tested entry point. Matches the existing house pattern:
-    base = https://llmfoundry.straive.com/<provider>
+Replaces roughly 67 hand-rolled proxy integrations across projects with a single,
+tested entry point. Expected URL and auth shape:
+    base = $LLMFOUNDRY_BASE_URL/<provider>
     auth = Authorization: Bearer $LLMFOUNDRY_TOKEN
     transport = httpx
 
 Design goals:
-- No surprises: same env vars and URL shape already used in the codebase.
 - Resilient: bounded retries with exponential backoff on transient errors.
 - Useful: chat(), chat_json() (strict JSON mode), and stream() helpers.
 - Observable: optional per-call cost/latency logging to a JSONL file.
+- Portable: the proxy host is configuration, never baked into this file.
 
-Dependencies: httpx only (already used everywhere). No openai SDK required.
+Dependencies: httpx only. No openai SDK required.
 
 Env vars:
     LLMFOUNDRY_TOKEN        required. Bearer token for the proxy.
-    LLMFOUNDRY_BASE_URL     optional. Default https://llmfoundry.straive.com
+    LLMFOUNDRY_BASE_URL     required. Proxy root, e.g. https://llm-proxy.example.com
     LLMFOUNDRY_PROJECT      optional. Appended to token as "<token>:<project>" if set.
     LLMFOUNDRY_LOG          optional. Path to a JSONL usage log. Logging off if unset.
 """
@@ -29,18 +29,18 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterator
 
 import httpx
 
-DEFAULT_BASE_URL = "https://llmfoundry.straive.com"
 DEFAULT_CHAT_MODEL = "gpt-4o-mini"
 TRANSIENT_STATUS = {408, 409, 429, 500, 502, 503, 504}
 
 
 class FoundryError(RuntimeError):
-    """Raised when the Foundry proxy returns a non-recoverable error."""
+    """Raised when the proxy returns a non-recoverable error."""
 
 
 def _token() -> str:
@@ -52,12 +52,18 @@ def _token() -> str:
 
 
 def _base_url() -> str:
-    return os.getenv("LLMFOUNDRY_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+    base = os.getenv("LLMFOUNDRY_BASE_URL")
+    if not base:
+        raise EnvironmentError(
+            "LLMFOUNDRY_BASE_URL not set. Export the proxy root, e.g. "
+            "export LLMFOUNDRY_BASE_URL=https://llm-proxy.example.com"
+        )
+    return base.rstrip("/")
 
 
 @dataclass
 class FoundryClient:
-    """Thin, retrying client for the OpenAI-compatible Foundry endpoint.
+    """Thin, retrying client for an OpenAI-compatible proxy endpoint.
 
     Usage:
         fc = FoundryClient()
@@ -204,14 +210,28 @@ class FoundryClient:
             client.close()
 
 
-# Module-level convenience singletons, so callers can do:
+# Module-level conveniences, so callers can do:
 #   from foundry_client import chat, chat_json
-_default = FoundryClient()
-chat = _default.chat
-chat_json = _default.chat_json
-stream = _default.stream
+# Built lazily: constructing a client reads the environment, and importing this
+# module must not require it to be configured yet. Cached for the process, so a
+# mid-run env change needs _client.cache_clear().
+@lru_cache(maxsize=1)
+def _client() -> FoundryClient:
+    return FoundryClient()
+
+
+def chat(*args: Any, **kwargs: Any) -> str:
+    return _client().chat(*args, **kwargs)
+
+
+def chat_json(*args: Any, **kwargs: Any) -> Any:
+    return _client().chat_json(*args, **kwargs)
+
+
+def stream(*args: Any, **kwargs: Any) -> Iterator[str]:
+    return _client().stream(*args, **kwargs)
 
 
 if __name__ == "__main__":
-    # Smoke test: requires LLMFOUNDRY_TOKEN. Use a tiny model.
+    # Smoke test: requires LLMFOUNDRY_TOKEN and LLMFOUNDRY_BASE_URL.
     print(chat("Reply with the single word: ok", model=DEFAULT_CHAT_MODEL))
