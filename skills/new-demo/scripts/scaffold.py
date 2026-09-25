@@ -8,7 +8,7 @@ a thin CLAUDE.md, a GitLab CI file, todo.md / changelog.md, pyproject.toml, and
 
 Usage:
     python scaffold.py my-demo
-    python scaffold.py my-demo --dir ~/Desktop/gitlab --title "My Demo"
+    python scaffold.py my-demo --dir ~/projects --title "My Demo"
 """
 
 from __future__ import annotations
@@ -175,6 +175,7 @@ def test_smoke() -> str:
 """Smoke test: app imports and health endpoint responds. No network/LLM call."""
 import os
 os.environ.setdefault("LLMFOUNDRY_TOKEN", "test")
+os.environ.setdefault("LLMFOUNDRY_BASE_URL", "https://llm-proxy.example.com")
 
 from fastapi.testclient import TestClient
 from app.main import app
@@ -204,12 +205,13 @@ def readme(title: str) -> str:
     return f"""
 # {title}
 
-A small LLM demo: FastAPI + a vanilla-JS SPA, inference via the Straive Foundry proxy.
+A small LLM demo: FastAPI + a vanilla-JS SPA, inference via an OpenAI-compatible LLM proxy.
 
 ## Setup
 ```bash
 uv sync
 export LLMFOUNDRY_TOKEN="..."
+export LLMFOUNDRY_BASE_URL="https://llm-proxy.example.com"
 uv run uvicorn app.main:app --reload
 ```
 Open http://127.0.0.1:8000
@@ -223,8 +225,10 @@ uv run pytest -q
 
 def vendor_foundry(dest_app: Path) -> None:
     """Copy foundry_client.py from the sibling foundry-client skill if present."""
+    skills_dir = HERE.parent.parent
     candidates = [
-        HERE.parent / "foundry-client" / "foundry_client.py",
+        skills_dir / "foundry-client" / "scripts" / "foundry_client.py",
+        skills_dir / "foundry-client" / "foundry_client.py",
         HERE / "foundry_client.py",
     ]
     for src in candidates:
@@ -260,7 +264,9 @@ def build(name: str, base: Path, title: str) -> Path:
     vendor_foundry(root / "app")
     print("\nNext:")
     print(f"  cd {root}")
-    print("  uv sync && export LLMFOUNDRY_TOKEN=... && uv run uvicorn app.main:app --reload")
+    print("  uv sync")
+    print("  export LLMFOUNDRY_TOKEN=... LLMFOUNDRY_BASE_URL=https://llm-proxy.example.com")
+    print("  uv run uvicorn app.main:app --reload")
     return root
 
 
