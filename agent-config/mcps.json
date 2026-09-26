@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "servers": {
+    "codegraphcontext": {
+      "description": "Code relationships, callers, callees, and dependency impact",
+      "claude_code": {"type": "stdio", "command": "uvx", "args": ["codegraphcontext", "mcp", "start"]},
+      "claude_desktop": {"command": "uvx", "args": ["codegraphcontext", "mcp", "start"]},
+      "codex": {"command": "uvx", "args": ["codegraphcontext", "mcp", "start"]}
+    },
+    "postman": {
+      "description": "API collections, specifications, environments, mocks, and tests",
+      "claude_code": {"type": "http", "url": "https://mcp.postman.com/minimal"},
+      "claude_desktop": {"url": "https://mcp.postman.com/minimal"},
+      "codex": {"url": "https://mcp.postman.com/minimal"}
+    },
+    "figma": {
+      "description": "Design context, tokens, components, and design-to-code workflows",
+      "claude_code": {"managed_by": "official-plugin", "plugin": "figma@claude-plugins-official", "url": "https://mcp.figma.com/mcp"},
+      "claude_desktop": {"url": "https://mcp.figma.com/mcp"},
+      "codex": {"url": "https://mcp.figma.com/mcp"}
+    }
+  }
+}

@@ -26,6 +26,9 @@ remote-settings.json
 .env.*
 !.env.example
 
+# Local research output derived from private agent sessions
+reports/
+
 # Installed runtimes and third-party checkouts
 security/
 plugins/
@@ -35,4 +38,3 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .DS_Store
-

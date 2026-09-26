@@ -9,6 +9,39 @@ non-coding agents.
 - `hooks/` contains lifecycle hooks that can be adapted to an agent runtime.
 - `scripts/` contains small utilities for agent status, workflow visibility, and
   validating skill folders against the spec.
+- `agent-config/` contains the canonical shared skills/MCP synchronization
+  manifest for Claude Code, Claude Desktop, and Codex.
+
+Run `scripts/agent-sync.py audit` to inspect drift or
+`scripts/agent-sync.py sync` to apply the shared configuration.
+
+### Syncing agents
+
+The repository is the source of truth for shared skills and MCPs:
+
+```bash
+./scripts/agent-sync.py audit  # read-only drift check
+./scripts/agent-sync.py sync   # link skills and merge MCP entries
+```
+
+The sync command updates Claude Code, Claude Desktop, and Codex without
+copying credentials. OAuth/API authentication remains local to each client.
+Conflicting global skill folders are moved to `~/.agent-sync-backups/` before
+they are replaced with links to this repository.
+
+Before uploading changes to GitHub, run:
+
+```bash
+./scripts/agent-sync.py audit
+python3 -m py_compile scripts/agent-sync.py
+jq empty agent-config/mcps.json
+git diff --check
+git status --short
+```
+
+Review the final diff and confirm that reports, logs, credentials, local
+settings, and backup directories are not included. Then commit and push from
+the repository owner account.
 
 ## Skills
 
