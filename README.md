@@ -84,6 +84,17 @@ requirements. They are not vendored copies of the upstream skills.
 | `post-mortem` | `delivery-review` |
 | `interactive-storytelling` | `interactive-explanation` |
 
+### Adapted from starred repositories
+
+- `architecture-diagrams` for source-backed system maps and standalone
+  interactive diagrams, adapted from [Archify](https://github.com/tt-a1i/archify).
+- `security-audit` for coverage-led vulnerability reviews with verified
+  findings, adapted from [Cloudflare's security audit skill](https://github.com/cloudflare/security-audit-skill).
+- `skill-learning` for distilling and consolidating lessons from agent work,
+  adapted from [AutoHarness](https://github.com/tigerless-labs/autoharness).
+  This is a portable, manually invoked workflow; AutoHarness's plugin and
+  automatic hooks are not installed.
+
 ## Validating skills
 
 `scripts/validate_skills.py` checks skill folders against the Agent Skills spec:
