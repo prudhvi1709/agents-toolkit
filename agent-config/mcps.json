@@ -18,6 +18,16 @@
       "claude_code": {"managed_by": "official-plugin", "plugin": "figma@claude-plugins-official", "url": "https://mcp.figma.com/mcp"},
       "claude_desktop": {"url": "https://mcp.figma.com/mcp"},
       "codex": {"url": "https://mcp.figma.com/mcp"}
+    },
+    "motion": {
+      "description": "Official Motion documentation, examples, and CSS easing for web animation",
+      "claude_code": {"type": "http", "url": "https://mcp.motion.dev"},
+      "codex": {"url": "https://mcp.motion.dev"}
+    },
+    "motion-plus": {
+      "description": "Optional Motion+ source and transition tools; account sign-in required",
+      "claude_code": {"type": "http", "url": "https://mcp.motion.dev/plus"},
+      "codex": {"url": "https://mcp.motion.dev/plus"}
     }
   }
 }
