@@ -1,6 +1,6 @@
 ---
 name: new-demo
-description: Scaffolds a new LLM demo in the house stack via scripts/scaffold.py - uv project, FastAPI backend wired to foundry-client, vanilla-JS Bootstrap SPA, thin CLAUDE.md, GitLab CI, todo and changelog. Use when starting a demo, POC, prototype, or small LLM web app, or when about to create a fresh FastAPI project with an LLM call and a simple UI.
+description: Scaffolds a new LLM demo in the house stack via scripts/scaffold.py - uv project, FastAPI backend wired to foundry-client, vanilla-JS Bootstrap SPA, shared AGENTS.md instructions with a thin Claude include, GitLab CI, todo and changelog. Use when starting a demo, POC, prototype, or small LLM web app, or when about to create a fresh FastAPI project with an LLM call and a simple UI.
 ---
 
 # new-demo
@@ -25,7 +25,8 @@ app/static/             Bootstrap SPA calling /api/chat
 app/foundry_client.py   vendored from the foundry-client skill
 tests/test_smoke.py     imports the app and hits /api/health, no network
 .gitlab-ci.yml          smoke test on branches and MRs
-CLAUDE.md               thin, defers to ~/.claude/CLAUDE.md
+AGENTS.md               shared project instructions for Codex and other agents
+CLAUDE.md               imports AGENTS.md for Claude Code
 todo.md changelog.md    pre-seeded, expected to stay current
 ```
 

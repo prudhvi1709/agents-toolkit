@@ -5,9 +5,9 @@ description: Save or resume durable project state for long tasks, context compac
 
 # Project checkpoint
 
-Create a small, human-readable checkpoint under `.claude/checkpoints/` unless
-the project already has an established state directory. Keep private machine
-state and transcripts out of the checkpoint.
+Create a small, human-readable checkpoint in the project's established state
+directory. If none exists, use `.agent-state/checkpoints/`, which works across
+agents. Keep private machine state and transcripts out of the checkpoint.
 
 Capture only information needed to resume:
 

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Transcript to TODO"
+  short_description: "Convert transcripts into confirmed action lists"
+policy:
+  allow_implicit_invocation: false

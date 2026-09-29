@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Build a privacy-preserving inventory of local coding-agent activity.
 
-The report contains counts, paths, and broad recurring-work categories only.
-It never writes transcript text, prompts, tool arguments, environment values, or
-session contents to the output files.
+The report contains counts, repository-relative paths, tool names, and broad
+recurring-work categories only. It never writes transcript text, prompts, tool
+arguments, environment values, or session contents to the output files.
 """
 
 from __future__ import annotations
@@ -80,6 +80,39 @@ def classify_file(path: Path) -> set[str]:
     return found
 
 
+def tool_usage(files: list[Path], client: str) -> list[dict[str, int | str]]:
+    calls: Counter[str] = Counter()
+    log_files: dict[str, set[str]] = defaultdict(set)
+    for path in files:
+        for record in iter_jsonl(path):
+            name = None
+            if client == "claude" and record.get("type") == "assistant":
+                message = record.get("message", {})
+                blocks = message.get("content", []) if isinstance(message, dict) else []
+                for block in blocks if isinstance(blocks, list) else []:
+                    if isinstance(block, dict) and block.get("type") in {"tool_use", "server_tool_use"}:
+                        name = block.get("name")
+                        if isinstance(name, str):
+                            calls[name] += 1
+                            log_files[name].add(path.stem)
+            elif client == "codex" and record.get("type") == "response_item":
+                payload = record.get("payload", {})
+                is_tool_call = isinstance(payload, dict) and payload.get("type") in {
+                    "function_call",
+                    "custom_tool_call",
+                    "mcp_tool_call",
+                }
+                if is_tool_call:
+                    name = payload.get("name")
+                    if isinstance(name, str):
+                        calls[name] += 1
+                        log_files[name].add(path.stem)
+    return [
+        {"name": name, "call_count": count, "log_file_count": len(log_files[name])}
+        for name, count in calls.most_common(20)
+    ]
+
+
 def project_label(path: Path, home: Path) -> str:
     relative = str(path.relative_to(home))
     if "/projects/" in relative:
@@ -94,6 +127,7 @@ def config_features(repo: Path) -> set[str]:
         repo / ".claude" / "settings.local.json",
         repo / ".cursor" / "mcp.json",
         repo / ".codex" / "config.toml",
+        repo / ".codex" / "hooks.json",
         repo / ".mcp.json",
     ]
     for path in candidates:
@@ -104,6 +138,8 @@ def config_features(repo: Path) -> set[str]:
             features.add("mcp_config")
         if name == "config.toml":
             features.add("codex_config")
+        if name == "hooks.json":
+            features.add("hooks")
         if name.startswith("settings"):
             features.add("claude_settings")
             try:
@@ -200,12 +236,19 @@ def main() -> int:
         "scope": {
             "desktop_root": str(desktop),
             "sources": ["~/.claude/projects", "~/.claude/jobs", "~/Library/Application Support/Claude/local-agent-mode-sessions", "~/.codex/sessions", "Desktop Git repositories"],
-            "privacy": "Counts and broad categories only; raw transcript text is not written.",
+            "privacy": (
+                "Counts, paths, category labels, and tool names only; "
+                "no raw transcript text is written."
+            ),
         },
         "source_counts": source_counts,
         "recurring_categories": {
             category: {"session_count": category_sessions[category], "context_count": len(projects)}
             for category, projects in sorted(category_projects.items(), key=lambda item: (-category_sessions[item[0]], item[0]))
+        },
+        "top_tool_usage": {
+            "claude": tool_usage(claude_files, "claude"),
+            "codex": tool_usage(codex_files, "codex"),
         },
         "repo_config_counts": dict(sorted(feature_counts.items())),
         "repos_with_agent_config": repos,
@@ -219,7 +262,8 @@ def main() -> int:
         "",
         f"Generated: `{summary['generated_at']}`",
         "",
-        "> Privacy: this report contains counts, repository-relative paths, and broad categories only. Raw prompts, transcripts, tool arguments, environment values, and credentials are excluded.",
+        "> Privacy: this report contains counts, repository-relative paths, tool names, and broad categories only. "
+        "Raw prompts, transcripts, tool arguments, environment values, and credentials are excluded.",
         "",
         "## Sources",
         "",
@@ -234,8 +278,24 @@ def main() -> int:
         lines.append(f"- `{feature}`: {count} repositories")
     lines += ["", "## Repositories with agent configuration", ""]
     for item in repos:
-        lines.append(f"- `{item['repo']}` — {', '.join(item['features'])}")
-    lines += ["", "## Recommended next experiments", "", "1. Add a local project-state MCP or hook that records current status, next action, and blockers.", "2. Add resumable benchmark/evaluation workflows with checkpoints instead of repeated polling.", "3. Add a design-handoff skill that preserves decisions, screenshots, and implementation gaps.", "4. Add a deployment preflight hook for tests, process cleanup, ports, and commit readiness.", "5. Re-run this audit periodically and compare category counts before adding new skills or MCPs.", ""]
+        lines.append(f"- `{item['repo']}`  -  {', '.join(item['features'])}")
+    lines += ["", "## Tool use frequency", ""]
+    for client, tools in summary["top_tool_usage"].items():
+        lines += [f"### {client}", ""]
+        for tool in tools:
+            line = f"- `{tool['name']}`: {tool['call_count']} calls "
+            line += f"across {tool['log_file_count']} log files"
+            lines.append(line)
+        lines.append("")
+    lines += [
+        "## Interpreting hook candidates",
+        "",
+        "These counts show frequency, not wasted work or a hook recommendation. "
+        "A hook fits only when the same deterministic check or side effect belongs at a specific lifecycle event. "
+        "Repeated work that needs judgment is better handled by a skill or MCP. "
+        "Review the task pattern, hook inputs and outputs, and data retention before enabling it.",
+        "",
+    ]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text("\n".join(lines), encoding="utf-8")
     print(f"Wrote {args.output} and {args.json_output}")

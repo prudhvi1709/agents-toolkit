@@ -3,8 +3,9 @@
 scaffold.py: stand up a new LLM demo in the house style.
 
 Generates: FastAPI backend wired to the Foundry client, a light vanilla-JS SPA,
-a thin CLAUDE.md, a GitLab CI file, todo.md / changelog.md, pyproject.toml, and
-.gitignore. Conventions are baked in so every demo starts consistent.
+shared AGENTS.md instructions with a thin Claude include, a GitLab CI file,
+todo.md / changelog.md, pyproject.toml, and .gitignore. Conventions are baked
+in so every demo starts consistent.
 
 Usage:
     python scaffold.py my-demo
@@ -131,7 +132,7 @@ $("prompt").addEventListener("keydown", (e) => { if (e.key === "Enter") ask(); }
 '''
 
 
-def claude_md(title: str) -> str:
+def agents_md(title: str) -> str:
     return f"""
 # {title}
 
@@ -142,7 +143,7 @@ LLM demo: FastAPI backend, vanilla-JS + Bootstrap SPA, Foundry for inference.
 - Python: uv only. Run with `uv run`. No bare pip.
 - All LLM calls go through `foundry_client` (do not hand-roll a Foundry call).
 - Secrets (LLMFOUNDRY_TOKEN) come from env, never committed.
-- Keep this thin. Only project-specific notes here; global rules live in ~/.claude/CLAUDE.md.
+- Keep this focused on project-specific notes. Follow any applicable global agent instructions.
 
 ## Discipline
 - Keep todo.md and changelog.md current.
@@ -152,6 +153,12 @@ LLM demo: FastAPI backend, vanilla-JS + Bootstrap SPA, Foundry for inference.
 ```bash
 uv run uvicorn app.main:app --reload
 ```
+"""
+
+
+def claude_md() -> str:
+    return """
+@AGENTS.md
 """
 
 
@@ -251,7 +258,8 @@ def build(name: str, base: Path, title: str) -> Path:
     print(f"Scaffolding {root}")
     w(root / "pyproject.toml", pyproject(name))
     w(root / "README.md", readme(title))
-    w(root / "CLAUDE.md", claude_md(title))
+    w(root / "AGENTS.md", agents_md(title))
+    w(root / "CLAUDE.md", claude_md())
     w(root / "todo.md", f"# todo\n\n- [ ] First task for {title}\n")
     w(root / "changelog.md", f"# changelog\n\n## {date.today().isoformat()}\n- Scaffolded {title}.\n")
     w(root / ".gitlab-ci.yml", gitlab_ci())

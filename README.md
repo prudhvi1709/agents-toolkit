@@ -12,8 +12,8 @@ non-coding agents.
 - `agent-config/` contains the canonical shared skills/MCP synchronization
   manifest for Claude Code, Claude Desktop, and Codex.
 
-Run `scripts/agent-sync.py audit` to inspect drift or
-`scripts/agent-sync.py sync` to apply the shared configuration.
+Run `scripts/agent-sync.py audit` to inspect drift. Sync a single category with
+`scripts/agent-sync.py sync --only skills`, `--only mcps`, or `--only hooks`.
 
 ### Syncing agents
 
@@ -21,7 +21,9 @@ The repository is the source of truth for shared skills and MCPs:
 
 ```bash
 ./scripts/agent-sync.py audit  # read-only drift check
-./scripts/agent-sync.py sync   # link skills and merge MCP entries
+./scripts/agent-sync.py sync --only skills  # link skills only
+./scripts/agent-sync.py sync --only mcps    # merge MCP entries only
+./scripts/agent-sync.py sync --only hooks   # apply hook adapters only
 ```
 
 The sync command updates Claude Code, Claude Desktop, and Codex without
