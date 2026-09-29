@@ -1,6 +1,6 @@
 ---
 name: transcript-to-todo
-description: Convert a meeting, chat, or voice transcript into a confirmed root-level todo.md through section-by-section user review. Preserve decisions, uncertainty, constraints, dissent, non-goals, and open questions without inventing work.
+description: Convert a meeting, chat, or voice transcript into a confirmed root-level todo.md through section-by-section user review. Preserve decisions, uncertainty, constraints, dissent, non-goals, and open questions without inventing work. Invoke only when the user explicitly requests transcript-to-todo conversion or names this skill.
 disable-model-invocation: true
 ---
 

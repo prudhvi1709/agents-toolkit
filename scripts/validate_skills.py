@@ -453,7 +453,12 @@ def validate(skill_dir: Path) -> tuple[list[Finding], Metrics | None, Score | No
 def discover(root: Path) -> list[Path]:
     if (root / "SKILL.md").exists():
         return [root]
-    return sorted(p for p in root.iterdir() if p.is_dir() and not p.name.startswith("."))
+    skills = {
+        path.parent
+        for path in root.rglob("SKILL.md")
+        if not any(part.startswith(".") for part in path.relative_to(root).parts)
+    }
+    return sorted(skills)
 
 
 def render_text(findings: list[Finding], metrics: list[Metrics]) -> str:

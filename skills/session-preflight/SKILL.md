@@ -9,8 +9,9 @@ Produce a short, evidence-backed project briefing before making substantial
 changes. Inspect only what is needed:
 
 1. repository root, branch, clean/dirty status, and recent relevant commits;
-2. project instructions and agent configuration (`CLAUDE.md`, `.claude`,
-   `.codex`, `.cursor`, `.mcp.json`), without exposing secrets;
+2. project instructions and agent configuration (`AGENTS.md`, `CLAUDE.md`,
+   `.agents`, `.claude`, `.codex`, `.cursor`, `.mcp.json`), without exposing
+   secrets;
 3. stack, package manager, test/lint/type-check commands, and entry points;
 4. active checkpoint, TODO, deployment manifest, and known limitations;
 5. running local services and port ownership only when the task needs them.

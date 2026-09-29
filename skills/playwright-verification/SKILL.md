@@ -36,7 +36,9 @@ loads one URL and does not log in, so put an authenticated page behind
 ## Driving the browser by hand
 
 Use the script for anything repeatable or gated. Use interactive Playwright or
-the Playwright MCP server for exploration, multi-step flows, and login.
+the Playwright MCP server when it is available for exploration, multi-step
+flows, and login. Otherwise use the browser automation tools available in the
+current agent, or the bundled verification script for a local page.
 
 - Inspect the accessibility tree before choosing selectors, and prefer role and
   accessible name over CSS paths that break on the next restyle.
