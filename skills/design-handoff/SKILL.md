@@ -5,9 +5,11 @@ description: Turn design reviews, screenshots, prototypes, and stakeholder feedb
 
 # Design handoff
 
-Create or update a focused handoff document, preferably `DESIGN.md` when the
-repository uses that convention. Preserve the existing design system and
-separate confirmed decisions from suggestions.
+Create or update a focused handoff in the project's existing convention.
+Preserve the existing design system and separate confirmed decisions from
+suggestions. For initial branded website exploration, use
+`brand-ui-prototyping` as the primary workflow; this skill covers the
+implementation handoff.
 
 The handoff should include:
 

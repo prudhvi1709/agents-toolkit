@@ -54,6 +54,8 @@ the repository owner account.
 - `new-demo` for scaffolding a FastAPI and vanilla-JS LLM demo project.
 - `transcript-to-todo` for turning a meeting transcript into a structured todo
   list that separates decisions from suggestions.
+- `brand-ui-prototyping` for iterating from approved brand assets and page
+  content through visual concepts, feedback, and themed HTML prototypes.
 
 ### Adapted from upstream workflows
 
