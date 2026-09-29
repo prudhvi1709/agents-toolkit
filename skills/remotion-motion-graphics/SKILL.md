@@ -1,136 +1,44 @@
 ---
 name: remotion-motion-graphics
-description: Create and edit professional motion graphics videos with Remotion (React-based video). Use this skill EVERY time the user wants to create a video, edit a video, animate something, build an intro/outro/logo animation, make a Reel/Short/promo/launch video, add text animations or captions to footage, composite images and B-roll into a video, or mentions Remotion, motion graphics, video rendering, or "make this video look better/less generic". Also trigger when editing an existing Remotion project or when the user complains their video looks basic, generic, or amateur — this skill contains the exact fixes. Always read this skill BEFORE writing any Remotion code.
+description: Create, edit, or improve videos and motion graphics in Remotion. Use when working on a Remotion composition, video render, animated title, social video, captions, or a visual polish pass. For simple cuts or transcodes outside Remotion, use the project's existing media tools.
 ---
 
-# Remotion Motion Graphics
+# Remotion motion graphics
 
-Remotion renders React components frame-by-frame into video. Code quality is not the
-bottleneck — **motion design craft is**. Untrained generation produces linear easing,
-opacity-only fades, simultaneous entrances, flat colors, and no texture. That is the
-"generic AI video" look. This skill exists to prevent it.
+Make the video serve its message and audience. Use Remotion for frame-driven composition, then review the moving result and revise it. A technically valid render is not a finished video.
 
-## Non-negotiable rules (apply to EVERY composition)
+## Start with the brief and the project
 
-1. **NEVER use linear interpolation.** Every `interpolate()` gets an easing curve;
-   every entrance prefers `spring()`. Always `extrapolateLeft/Right: "clamp"`.
-2. **Entrances animate 2–3 properties together** (opacity + translateY + scale).
-   A lone fade is forbidden.
-3. **Stagger everything.** Lists, words, rays, cards: 3–6 frame offsets. Nothing
-   enters simultaneously.
-4. **Exits exist and are faster than entrances** (~10 frames vs ~20).
-5. **Five-layer stack in every scene**, bottom to top: background mesh → assets →
-   graphics/type → color grade → grain + vignette. Never a flat solid background.
-6. **Every still image gets Ken Burns** (slow scale 1→1.08 + pan). Every video asset
-   uses `<OffthreadVideo>`, never `<Video>`.
-7. **Idle elements breathe**: anything on screen >2s gets sin-wave micro-motion.
-8. **All timing derives from `fps`** via `useVideoConfig()`. No magic frame numbers.
-9. **One theme object** at the top of the project (colors, easings, spring presets,
-   fonts). Never inline a hex color or easing in a component.
-10. **Render, extract frames, LOOK at them, fix, re-render.** Never deliver an
-    unverified render. This loop is mandatory — see Verification below.
+- Inspect the existing project, package versions, assets, composition IDs, and user edits before changing code. Preserve its structure and design system unless the request calls for a change.
+- Establish audience, platform, aspect ratio, length, message, call to action, brand rules, supplied footage/audio, and delivery format. Make a short beat plan or storyboard for a multi-scene video. Label unverified claims and placeholder assets.
+- If a reference video is supplied, identify its pacing, hierarchy, camera language, typography, and sound. Use those observations as design criteria, not as a template to copy wholesale.
+- Check the current [Remotion Agent Skills](https://github.com/remotion-dev/skills) and [Remotion docs](https://www.remotion.dev/docs/) for APIs affected by the task. Their `remotion-markup`, `remotion-render`, `remotion-captions`, and `remotion-multimedia` guidance covers implementation details that change over time. Do not install another skill or upgrade a project merely to read guidance.
 
-## Workflow
+## Design and build
 
-### Step 1 — Scope
-Determine: duration, fps (30 default; 60 only for heavy fast motion), dimensions
-(1080×1920 Reels/Shorts, 1920×1080 landscape), what assets exist (images, footage,
-audio, logos), and whether this is a new composition or an edit to an existing project.
-If editing an existing project: read `src/` fully first, find the theme (or create one),
-and refactor violations of the rules above before adding features.
+- Match motion to the tone: restrained movement, hard cuts, linear movement, still images, or silence can be deliberate. Avoid adding grain, glow, constant motion, transitions, or sound effects by default.
+- Give each scene one clear visual priority. Vary shot scale and pacing; leave enough time to read text. Use meaningful transitions and animate only properties that help reveal information or direct attention.
+- Use approved logos, colors, fonts, and footage as provided. Do not redraw or recolor protected brand assets. Verify licenses and provenance for new music, footage, fonts, and generated imagery before delivery.
+- Drive animation from `useCurrentFrame()` and `useVideoConfig()` so preview and render agree. Avoid CSS animations and transitions for rendered motion. Clamp an interpolation where values must stop at a boundary; use easing or springs when they suit the movement.
+- For new media code, check the current `@remotion/media` `Video` and `Audio` guidance. Use `OffthreadVideo` only when its documented behavior fits the project or an existing implementation requires it. Keep compatible Remotion packages on the same version; add packages with the project's package manager and Remotion's documented version guidance.
+- Use `staticFile()` for local assets in `public/`. Load fonts deterministically. Inspect media metadata before setting trims, playback rate, or composition duration. Keep scene and audio timing in sync, including transition overlaps.
+- For a new unbranded composition, [theme.ts](assets/theme.ts) is an optional token starter. Existing project tokens and approved brand rules take priority.
+- Read [motion-patterns.md](references/motion-patterns.md) for optional creative patterns and implementation traps. Read [design-rules.md](references/design-rules.md) when planning a new video or assessing a polish pass. Copy a pattern only after adapting it to the project's Remotion version and the brief.
 
-### Step 2 — Setup
-New project:
+## Review loop
+
+1. Preview the composition in Studio. Check the opening, each scene boundary, text holds, captions, final frame, and audio cues at normal speed. Use slow playback to inspect a specific timing problem.
+2. Render representative stills early, then render the full video. Inspect stills for cropping, contrast, font loading, overlays, and safe areas. Watch the encoded video from start to finish with sound, including cuts and the ending.
+3. Record the concrete issue and change one related decision at a time: timing, hierarchy, asset choice, motion, sound, or readability. Render again and inspect the affected moments plus the full cut. Continue until the brief and delivery checks pass or report the unresolved issue.
+
+For a quick still check, use the installed Remotion CLI. Recent versions accept a comma-separated frame list:
+
 ```bash
-npm install remotion @remotion/cli react react-dom
-# optional: @remotion/transitions @remotion/motion-blur @remotion/google-fonts
+npx remotion render <composition-id> out/review --frames=0,30,90 --image-format=png
 ```
-Copy `assets/theme.ts` from this skill into `src/theme.ts` and adjust the palette to
-the user's brand. Structure: `src/index.ts` (registerRoot) → `src/Root.tsx`
-(Composition, duration/fps/size) → `src/scenes/*.tsx` → `src/components/*.tsx`.
-User assets go in `public/`, loaded via `staticFile()`.
 
-### Step 3 — Build
-Read `references/motion-patterns.md` for the reusable component implementations
-(BgMesh, Grade, Grain, Vignette, KenBurns, WordReveal, Stagger, Counter, Spark,
-transitions, parallax). Compose scenes from those patterns. For pacing, rhythm,
-typography, color palettes, and sound design rules, read
-`references/design-rules.md`.
+Check the installed CLI's `render` and `still` help before relying on newer flags. Choose codec, quality, transparency, and dimensions for the actual destination; do not use one preset for every platform. If a render cannot run, say exactly what was verified and what still needs visual or audio review.
 
-Scene rhythm: HIT → hold (15–20 still frames) → build → HIT. Something must move
-in the first 15 frames. Never >90 frames without a new visual element.
+## Handoff
 
-### Step 4 — Render
-```bash
-npx remotion render src/index.ts <CompId> out/video.mp4 --codec h264 --crf 17
-```
-Remotion needs a Chromium binary. If its auto-download fails (sandboxes, offline CI),
-find one and pass it explicitly:
-```bash
-which chromium chromium-browser google-chrome 2>/dev/null
-ls /opt/pw-browsers 2>/dev/null   # Playwright installs live here
-npx remotion render ... --browser-executable=<path>
-```
-If full Chrome errors with "Old Headless mode has been removed", use a
-`headless_shell` binary instead (Playwright ships one as
-`chromium_headless_shell-*/chrome-linux/headless_shell`).
-
-### Step 5 — VERIFY (mandatory, never skip)
-Extract frames at key moments and visually inspect each one. The portable
-method — works on machines with no system ffmpeg, renders the exact frame:
-```bash
-for f in 15 45 90 150; do
-  npx remotion still src/index.ts <CompId> out/check_$f.png --frame $f --overwrite
-done
-```
-If system ffmpeg IS available, extracting from the finished mp4 also verifies
-the encode itself (`-ss` seeking is more portable than `select=` filters, whose
-quoting breaks in some shells and in Remotion's bundled ffmpeg):
-```bash
-ffmpeg -v error -ss 1.5 -i out/video.mp4 -frames:v 1 check_1.png
-```
-Look for, and fix, in order of frequency:
-- **Spacing bugs**: `gap`/`margin` in `em` resolves against the PARENT font-size
-  (often 16px), not the text size — use px values in flex containers around big type.
-- Text overflowing or touching frame edges (keep critical content in middle 75%
-  vertically for 9:16 — platform UI covers top/bottom).
-- Elements visible before their entrance or after their exit (missing clamp).
-- Color/contrast failures: hero color on >1 element per frame, dim text unreadable
-  over the grade.
-- Layer order mistakes (grain/vignette must be on top, grade above content).
-Fix → re-render → re-extract → re-inspect. Only deliver after a clean pass.
-Then run the final checklist at the bottom of `references/design-rules.md`.
-
-### Editing the user's existing footage
-To enhance an existing mp4 (captions, grade, intro/outro) rather than build from
-scratch: put the file in `public/`, render it as the asset layer with
-`<OffthreadVideo src={staticFile("clip.mp4")} />`, set composition duration from the
-clip length, and stack graphics/grade/grain above it. Get the clip's duration and fps
-with `ffprobe` before setting up the composition. For word-synced captions over
-speech, see the captions section of `references/motion-patterns.md`.
-
-## Reference files
-- `references/motion-patterns.md` — copy-paste component library: backgrounds,
-  grade/grain/vignette, Ken Burns, text reveals, counters, transitions, parallax,
-  audio sync, captions. Read before writing components.
-- `references/design-rules.md` — palettes, typography rules, scene architecture,
-  sound design, pre-delivery checklist. Read before designing scenes and before
-  final delivery.
-- `assets/theme.ts` — the theme template to copy into every project.
-
-## Common failure modes to actively avoid
-- **Emoji as icons.** Emoji render as full-color platform glyphs (green ✳️,
-  blue 🌐) that ignore your palette and silently break the one-hero-color rule,
-  and they sit on whatever background you gave them (orange mascot on orange
-  tile = invisible). Draw glyphs with CSS/SVG in theme colors, or verify every
-  emoji against the extracted frames.
-- **No SFX assets is not a reason to ship silent.** Synthesize a minimal kit as
-  16-bit WAVs from a Node script (noise-burst whoosh, pitch-drop pop, sine-thump
-  kick/bass, detuned-sine pad) into `public/sfx/` — see `examples/scripts/` in
-  the repo. Zero downloads, fully deterministic.
-- Generating one giant component instead of themed, reusable pieces.
-- `durationInFrames` mismatch between Composition and scene content (dead air).
-- Forgetting `--overwrite` on re-renders, then inspecting the stale file.
-- Fonts: never rely on system defaults for hero text; load a display font via
-  `@remotion/google-fonts` or `@font-face` + `staticFile`.
-- Trying to "describe" the result to the user instead of rendering and verifying it.
+Provide the output path, composition ID, dimensions, fps, duration, codec, source and license notes for new assets, and any unresolved limitations. Keep the editable project and final render together when the user needs to revise the video later.

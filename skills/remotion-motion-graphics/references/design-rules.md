@@ -1,84 +1,35 @@
-# Design Rules — Color, Type, Pacing, Sound, Checklist
+# Video design and review criteria
 
-## Color system
-One dark (or light) base + ONE hero color + one accent + neutrals. 60/30/10:
-60% base, 30% secondary surfaces, 10% hero. The hero color appears on AT MOST
-one element per frame — it directs the eye.
+Use these criteria for a new concept or a visual polish pass. The brief and approved brand system take precedence over aesthetic defaults.
 
-Proven palettes (adapt to user's brand if they have one):
-- Dark tech: base #0A0A0F, hero #7C3AED, accent #22D3EE, text #F4F4F5
-- Warm editorial (Claude-like): base #FAF7F2, hero #D97757, ink #1F1E1B
-- Warm premium: base #1A120B, hero #E8A33D, accent #F4E9DA
-- Clean light: base #F7F5F2, ink #1A1A1A + one saturated accent
+## Plan the communication
 
-Glow on the hero element only:
-`boxShadow: 0 0 60px ${hero}66, 0 0 120px ${hero}33` (text: textShadow).
-More than one glowing element per frame = Vegas. Don't.
+- State the one idea the viewer should remember and the action, if any, they should take.
+- Build a beat plan: opening, context, development, payoff, ending. Fit the number of beats to the duration and complexity. Check factual claims, numbers, and product visuals against source material.
+- Choose a visual mode that fits the material: footage-led, typography-led, product demo, illustration, data story, or a mix. Select references for pacing, framing, type, and sound separately when no single example fits.
+- Define a small set of design tokens only where reuse helps. Existing brand colors, fonts, and logo rules override example palettes.
 
-## Typography
-- Hero text: display face (Clash Display, Cabinet Grotesk, General Sans, Satoshi —
-  free on Fontshare; or a Google variable font via @remotion/google-fonts).
-  Weight 600–800, letterSpacing -0.03em, lineHeight 1.05.
-- Reels hero size: 80–140px at 1080 wide. Landscape: 100–160px at 1920.
-- Body/captions: a clean sans (Inter/system) at 400–500, dimmed color.
-- Highlight ONE word per headline: hero color, animated underline, or a pill
-  scaling in behind it 5 frames after the word lands.
-- Numbers: animated counters with tabular-nums (see motion-patterns §9).
+## Make the edit feel intentional
 
-## Scene architecture
-30s Reel structure:
-```
-0.0–1.5s  HOOK    boldest visual + claim. Movement within the FIRST 15 frames.
-1.5–3.0s  CONTEXT one line, one visual, still moving.
-3–22s     BODY    3–4 beats. Each beat: HIT -> hold (15–20 still frames) -> build.
-22–27s    PAYOFF  the result/number/demo. Biggest animation of the video.
-27–30s    CTA     one action, calm, glow on the CTA word.
-```
-- New visual element at least every 90 frames.
-- Holds are a design tool: fast move -> complete stillness -> next move.
-  Constant motion reads amateur; contrast reads expensive.
-- 9:16 safe zone: critical text inside the middle ~75% vertically (platform UI
-  covers top and bottom).
-- 5s logo stings: mark in (0–0.8s) -> wordmark (0.6–1.8s) -> detail/tagline
-  (2–3.5s) -> breathe -> exit (last 0.5s).
+- Give the opening a reason to watch, then create a clear hierarchy in each shot. Motion should reveal, connect, or emphasize information.
+- Vary pace with holds, cuts, and movement. Allow enough on-screen time to read and understand; test at actual playback speed. Do not require constant animation or a visual change at a fixed interval.
+- Choose entrance and exit behavior per element. A simple cut or fade can be stronger than a spring, stagger, or multi-property entrance.
+- Use camera moves on stills only when the source has enough resolution and the move adds meaning. Keep logos and UI screenshots stable when movement harms recognition or legibility.
+- Use texture, color grading, blur, and effects sparingly. Check whether they reduce contrast or alter approved colors. Compare a clean frame with the treated frame.
+- Check text at delivery size on a phone when producing vertical social video. Keep critical content away from platform controls, but verify the actual platform's current safe areas instead of assuming a universal percentage.
 
-## Sound design (50% of perceived quality — never deliver silent unless asked)
-- Every entrance HIT: short whoosh/click starting 2–3 frames BEFORE the visual
-  lands (early feels synced; late feels broken).
-- Transitions: riser into the cut, bass hit ON the cut.
-- Counters: soft tick loop while counting.
-- Music bed at low volume (~0.2–0.3), ducked further under VO.
-- Pick music FIRST when possible; compute framesPerBeat = fps*60/BPM and place
-  cuts on beats.
-- Free SFX sources to suggest: Pixabay, Mixkit, freesound.org. A 10-file kit
-  covers everything: 2 whooshes, 2 clicks, riser, bass hit, shimmer, tick, pop,
-  reverse-swoosh.
+## Sound and captions
 
-## Asset generation guidance (when user generates images for the video)
-Lock a prompt skeleton, vary only the subject, keep lighting + palette words
-identical across the set, generate at final aspect ratio:
-```
-[subject], cinematic product photography, dark moody studio, [hero color] rim
-lighting, deep shadows, shallow depth of field, 9:16
-```
+- Decide whether the video needs voiceover, music, effects, ambient sound, or silence. Use only assets with suitable rights. Do not synthesize or download audio merely to avoid a silent render.
+- Set music beneath speech; listen for masking, clipping, abrupt cuts, and awkward fades. Place effects at the perceived action, then verify by listening.
+- When speech is important, use accurate captions where appropriate. Check transcription, names, punctuation, timing, line breaks, contrast, and safe-area placement against the finished audio.
 
-## Render settings
-- Masters for upload: `--codec h264 --crf 16` (platforms re-compress; give headroom)
-- Heavy transparency/blur stacks: add `--image-format png`
-- Preview suspicious motion at 0.25x in Remotion Studio — easing flaws invisible
-  at 1x are obvious at quarter speed.
+## Delivery review
 
-## PRE-DELIVERY CHECKLIST — run against every video before presenting it
-- [ ] Zero linear easing anywhere; every interpolate clamped
-- [ ] Entrances = 2–3 properties, staggered; nothing enters simultaneously
-- [ ] Exits animated, faster than entrances
-- [ ] Every still has Ken Burns; fast moves have motion blur
-- [ ] 5-layer stack present (bg mesh, assets, graphics, grade, grain+vignette)
-- [ ] One hero color, ≤1 hero-colored/glowing element per frame
-- [ ] Display font ≥600 weight on heroes; no default-font hero text
-- [ ] Pixel gaps (not em) between large text blocks
-- [ ] Holds exist: ≥3 moments of stillness
-- [ ] SFX on major hits, cuts on beat (if audio in scope)
-- [ ] Text inside safe zone; nothing touching frame edges
-- [ ] Rendered, frames extracted with ffmpeg, every extracted frame visually
-      inspected, issues fixed, re-rendered, re-inspected
+- [ ] The message, pacing, visual tone, and ending fit the brief.
+- [ ] Logos, colors, fonts, footage, and factual claims are approved or clearly marked as placeholders.
+- [ ] Text and captions are readable at delivery size and avoid relevant platform controls.
+- [ ] No unintended blank frames, cropped subjects, font swaps, animation overshoot, or dead air.
+- [ ] Audio is intelligible and free of clipping or unintended silence.
+- [ ] The full encoded file was watched, with representative stills checked at scene boundaries and problem moments.
+- [ ] Export settings match the destination; source files and asset rights are documented for handoff.
