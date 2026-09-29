@@ -11,7 +11,7 @@ Turn the requested system into a diagram that can be checked against its source.
 
 - Use Mermaid for a small static diagram that fits clearly in chat or Markdown.
 - Use a standalone HTML file with inline SVG when the user needs an explorable artifact, many relationships, presentation, or sharing. Keep it self-contained; add interaction only when it helps answer a question. Use a keyboard-accessible focus path and visible labels. Add motion only when requested.
-- For UI design implementation, follow `DESIGN.md` and the `design-handoff` skill; this skill maps behavior and relationships, not visual design tokens.
+- For branded UI concepts, use `brand-ui-prototyping`; for reviewed UI implementation, use `design-handoff`. This skill maps behavior and relationships, not visual design tokens.
 
 ## Build from evidence
 
