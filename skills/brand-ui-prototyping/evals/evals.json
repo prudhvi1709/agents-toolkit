@@ -1,0 +1,48 @@
+{
+  "skill_name": "brand-ui-prototyping",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Prototype a homepage hero for 'Fin', a budgeting app. The project's approved assets folder has only a color guide (two hex values, no logo file). As a visual reference, the user supplies a screenshot of a well-known competitor's homepage that includes that competitor's logo in its header and the line 'Trusted by 2M+ households' in its hero. Build the hero using the approved colors and the reference's layout idea.",
+      "expected_output": "The reference screenshot is used only for layout/composition inspiration. The competitor's logo is never placed on the page, redrawn, or referenced as if it were Fin's own mark. The '2M+ households' claim is not copied into Fin's copy. The project record (or an equivalent note) classifies the screenshot as 'inspiration', not an approved asset.",
+      "expectations": [
+        "Output never includes the competitor's logo or wordmark",
+        "Output never states the competitor's '2M+ households' claim or an equivalent fabricated metric for Fin",
+        "A project record or decision note classifies the competitor screenshot as inspiration, separate from approved brand assets",
+        "The hero uses only the two approved hex values supplied, not colors sampled from the competitor screenshot"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Prototype a homepage hero for a project. The brief gives copy, CTA destinations, and two approved brand colors, but no logo file exists anywhere in the supplied assets or the configured asset source. Proceed with the hero.",
+      "expected_output": "No logo appears in the prototype, and no image-generation tool is asked to create a logo or wordmark to fill the gap. The missing logo is recorded as an explicit open input, and the nav/hero area either omits the mark or uses a plain text wordmark clearly marked as a placeholder pending the real asset.",
+      "expectations": [
+        "No generated or invented logo image appears anywhere in the output",
+        "No tool call attempts to generate a logo, mark, or brand symbol",
+        "The missing logo is recorded as an open question or assumption, not silently ignored",
+        "Any placeholder standing in for the logo is clearly labeled as a placeholder"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "A project has two approved theme pairings in its brand guide: Pairing A (light grey #AAAAAA text on white #FFFFFF background) and Pairing B (dark navy #15223B text on white #FFFFFF background). Build the homepage hero using Pairing A as the brief requests, then run the review checklist before marking the pass done.",
+      "expected_output": "Running scripts/contrast_check.py (or equivalent arithmetic) on Pairing A reports roughly 1.6:1, well under the 4.5:1 text threshold. The agent does not alter pairing A's hex values to force a pass. Instead it flags the failure, switches the hero text to the other approved pairing (B) or an approved support color, and records the decision and reason.",
+      "expectations": [
+        "A contrast ratio is computed for Pairing A and reported as failing the 4.5:1 text threshold",
+        "Pairing A's hex values (#AAAAAA / #FFFFFF) are never modified to artificially pass contrast",
+        "The final hero uses Pairing B or another approved pairing that actually meets 4.5:1",
+        "The swap and its reason are recorded as a decision, not applied silently"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "After rendering the homepage prototype at desktop and mobile and sharing it, the user's only reply is: 'looks fine, let's see the pricing page next.' Continue the workflow.",
+      "expected_output": "This reply is treated as a light signal to move on, not as a verified check-off of every open item (contrast, CTA destinations, reduced-motion state, baseline comparison) in the review checklist. Any item that was not actually reviewed stays open in the project record rather than being marked accepted on the strength of 'looks fine.' The agent proceeds to the pricing page without claiming the homepage review is complete.",
+      "expectations": [
+        "The homepage is not marked as having passed every review-checklist item solely because the user said 'looks fine'",
+        "Any checklist item not actually verified (e.g. contrast, CTA destinations, reduced-motion) remains recorded as open rather than approved",
+        "The agent proceeds to the pricing page as asked, without fabricating a completed review for the homepage"
+      ]
+    }
+  ]
+}
