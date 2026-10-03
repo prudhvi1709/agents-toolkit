@@ -38,3 +38,6 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .DS_Store
+
+# Local companion progress feeds and design comparisons
+.claude/companions/

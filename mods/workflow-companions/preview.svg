@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="640" viewBox="0 0 1080 640">
+  <title>Work companions layout preview</title>
+  <desc>Example states, not a live-session screenshot. Two aligned rows for global companions, an optional third hero row, and a compact detail pane.</desc>
+  <rect width="1080" height="640" fill="#151a21"/>
+  <g font-family="monospace" fill="#edf1f5">
+    <text x="44" y="56" font-size="24" font-weight="bold">Work companions</text>
+    <text x="44" y="84" font-size="13" fill="#9aa8b7">Layout preview / example states / native terminal colors follow your theme</text>
+    <text x="44" y="136" font-size="15" fill="#9aa8b7">Global, only when there is work to track</text>
+    <rect x="44" y="154" width="992" height="94" rx="2" fill="#1c232d" stroke="#4a5968"/>
+    <g font-size="15">
+      <text x="64" y="189" fill="#e8ba73">(o.o)</text>
+      <text x="130" y="189">Evidence</text>
+      <text x="270" y="189" fill="#e8ba73">Haunted</text>
+      <text x="385" y="189" fill="#aebac7">2 stale checks. Boo.</text>
+      <text x="973" y="189" fill="#aebac7">View</text>
+      <text x="64" y="224" fill="#7dcdd8">[~]</text>
+      <text x="130" y="224">Chai stall</text>
+      <text x="270" y="224" fill="#7dcdd8">Running</text>
+      <text x="385" y="224" fill="#aebac7">184/240 served, 12 retrying</text>
+      <text x="973" y="224" fill="#aebac7">View</text>
+    </g>
+    <text x="44" y="293" font-size="15" fill="#9aa8b7">Design project, with an explicit comparison</text>
+    <rect x="44" y="311" width="590" height="258" rx="2" fill="#1c232d" stroke="#4a5968"/>
+    <g font-size="14">
+      <text x="64" y="345" fill="#88c9a1">(o.o)</text>
+      <text x="126" y="345">Evidence</text>
+      <text x="253" y="345" fill="#88c9a1">Fresh</text>
+      <text x="351" y="345" fill="#aebac7">2 observed checks</text>
+      <text x="64" y="380" fill="#7dcdd8">[~]</text>
+      <text x="126" y="380">Chai stall</text>
+      <text x="253" y="380" fill="#88c9a1">Done</text>
+      <text x="351" y="380" fill="#aebac7">240/240 served</text>
+      <text x="64" y="415" fill="#7dcdd8">[vs]</text>
+      <text x="126" y="415">Hero club</text>
+      <text x="253" y="415" fill="#7dcdd8">Chosen</text>
+      <text x="351" y="415" fill="#aebac7">Centered hero</text>
+      <path d="M64 441 H614" stroke="#4a5968"/>
+      <text x="64" y="474" fill="#9aa8b7">The same columns. The third row is opt-in.</text>
+      <text x="64" y="505" fill="#9aa8b7">No feed? No Chai row. No checks? No ghost.</text>
+      <text x="64" y="539" fill="#7dcdd8">/companions</text>
+      <text x="181" y="539" fill="#9aa8b7">opens the detail pane</text>
+    </g>
+    <rect x="658" y="311" width="378" height="258" rx="2" fill="#1c232d" stroke="#4a5968"/>
+    <g font-size="14">
+      <text x="679" y="345" font-weight="bold">[~] Benchmark Chai Stall</text>
+      <text x="679" y="379">Overnight evaluation</text>
+      <text x="679" y="412" fill="#7dcdd8">[===============.....] 184/240</text>
+      <text x="679" y="445" fill="#aebac7">56 waiting, 12 retrying</text>
+      <text x="679" y="478" fill="#e8ba73">State: stalled. Heartbeat 8m ago.</text>
+      <text x="679" y="507" fill="#aebac7">The kitchen went quiet.</text>
+      <text x="679" y="539" fill="#7dcdd8">[ Refresh ]       [ Close ]</text>
+    </g>
+    <text x="44" y="610" font-size="13" fill="#9aa8b7">Below 64 columns, detail text stacks. Status words keep meaning without color.</text>
+  </g>
+</svg>

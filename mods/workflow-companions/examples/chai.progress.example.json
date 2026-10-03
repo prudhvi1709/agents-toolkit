@@ -1,0 +1,9 @@
+{
+  "name": "Overnight evaluation",
+  "status": "running",
+  "completed": 184,
+  "total": 240,
+  "retrying": 12,
+  "heartbeat_at": "2026-10-03T00:00:00Z",
+  "stale_after_seconds": 300
+}

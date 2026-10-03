@@ -1,0 +1,7 @@
+{
+  "name": "workflow-companions",
+  "version": "0.1.0",
+  "description": "Evidence Ghost, Benchmark Chai Stall, and opt-in Hero Fight Club in one aligned companion strip.",
+  "author": { "name": "Prudhvi Krovvidi" },
+  "types": "./types/index.d.ts"
+}
