@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="116" viewBox="0 0 1080 116">
+  <title>Benchmark Chai Stall status preview</title>
+  <desc>Illustrative example state, not a live-session screenshot.</desc>
+  <rect width="1080" height="116" fill="#151a21"/>
+  <rect x="44" y="34" width="992" height="48" rx="2" fill="#1c232d" stroke="#4a5968"/>
+  <g font-family="monospace" font-size="15" fill="#edf1f5">
+    <text x="64" y="64" fill="#7dcdd8">[~]</text>
+    <text x="130" y="64">Chai stall</text>
+    <text x="270" y="64" fill="#7dcdd8">Running</text>
+    <text x="385" y="64" fill="#aebac7">184/240 served, 12 retrying</text>
+    <text x="973" y="64" fill="#aebac7">View</text>
+  </g>
+</svg>
