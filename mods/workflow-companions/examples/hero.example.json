@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "title": "Homepage direction",
+  "variants": [
+    {
+      "id": "centered",
+      "label": "Centered hero",
+      "description": "Give the scope-based headline uninterrupted reading space. Primary CTA: Explore the work. Secondary CTA: Get in touch."
+    },
+    {
+      "id": "split",
+      "label": "Split hero",
+      "description": "Place approved project imagery beside the scope-based headline. Keep the same CTA priority so the comparison isolates the layout."
+    }
+  ]
+}

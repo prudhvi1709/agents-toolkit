@@ -7,6 +7,9 @@ non-coding agents.
 
 - `skills/` contains task-specific agent instructions and supporting code.
 - `hooks/` contains lifecycle hooks that can be adapted to an agent runtime.
+- `mods/` contains Claude Code UI mods and companions for usage, cache timing,
+  check evidence, batch progress, and design choices. See `mods/README.md` for
+  the global setup and update workflow.
 - `scripts/` contains small utilities for agent status, workflow visibility, and
   validating skill folders against the spec.
 - `agent-config/` contains the canonical shared skills/MCP synchronization

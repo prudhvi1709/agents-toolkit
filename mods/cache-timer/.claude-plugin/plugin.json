@@ -1,0 +1,6 @@
+{
+  "name": "cache-timer",
+  "version": "0.1.0",
+  "description": "Countdown to the 1-hour prompt-cache TTL in the status line.",
+  "types": "./types/index.d.ts"
+}
