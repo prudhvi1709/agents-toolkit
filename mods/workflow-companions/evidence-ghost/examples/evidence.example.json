@@ -1,0 +1,8 @@
+{
+  "checks": [
+    {
+      "command": "uv run pytest -q",
+      "inputs": ["src", "tests", "pyproject.toml", "uv.lock"]
+    }
+  ]
+}

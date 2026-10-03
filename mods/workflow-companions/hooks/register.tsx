@@ -1,8 +1,11 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
-import { age, chaiState, checkLabel, initialState, localPath, parseChai, parseChoice, parseHero, progressBar, putReceipt } from './model'
 import type { Companions, Receipt } from '../types'
+import { age, initialState, localPath } from './model'
 import { digest } from './snapshot'
+import { chaiState, parseChai, progressBar } from '../benchmark-chai-stall/model'
+import { parseChoice, parseHero } from '../hero-fight-club/model'
+import { checkLabel, parseEvidenceScopes, putReceipt } from '../evidence-ghost/model'
 
 const state = atom({ plugin: 'workflow-companions', key: 'companions' } as const, initialState())
 
@@ -38,11 +41,7 @@ const refresh = async ($: EngineInterface, runtime: { isRefreshing: boolean }): 
     }
     if (current.receipts.length > 0) {
       try {
-        const fingerprint = await snapshot($, root)
-        await update($, state, previous => ({
-          ...previous, evidenceError: null,
-          receipts: previous.receipts.map(item => item.status === 'passed' && item.snapshot !== fingerprint ? { ...item, status: 'stale' } : item),
-        }))
+        await refreshEvidence($, root)
       } catch {
         await update($, state, previous => ({
           ...previous, evidenceError: 'Worktree snapshot unavailable. Freshness is unknown.',
@@ -101,6 +100,37 @@ const open = async ($: EngineInterface, tab: Companions['tab'], runtime: { isRef
 }
 
 
+async function evidenceSnapshot($: EngineInterface, root: string, id: string): Promise<{ fingerprint: string; isScoped: boolean }> {
+  const source = await readLocal($, root, '.claude/companions/evidence.json')
+  const scopes = source === null ? [] : parseEvidenceScopes(source)
+  let inputs: string[] | null = null
+  for (const scope of scopes) {
+    if (await digest(scope.command) === id) { inputs = scope.inputs; break }
+  }
+  if (inputs === null) return { fingerprint: await snapshot($, root), isScoped: false }
+  const listing = await $.process.run([
+    'git', 'ls-files', '--cached', '--others', '--exclude-standard', '-z', '--',
+    ...inputs.map(path => `:(literal)${path}`),
+  ], { cwd: root, timeoutMs: 3000 })
+  if (listing.exitCode !== 0 || listing.isStdoutTruncated) throw new Error('Cannot inspect scoped inputs.')
+  const files = [...new Set(listing.stdout.split('\0').filter(Boolean))].sort()
+  if (files.length === 0) throw new Error('The configured scope contains no Git-visible inputs.')
+  if (files.length > 64) throw new Error('Too many scoped files for a complete snapshot.')
+  const parts = [JSON.stringify(inputs)]
+  let bytes = 0
+  for (const file of files) {
+    const path = `${root}/${localPath(file)}`
+    if (!(await $.fs.exists(path))) { parts.push(file, 'missing'); continue }
+    const info = await $.fs.stat(path, { resolve: true })
+    bytes += info.size
+    if (info.isLink || info.kind !== 'file' || !info.realPath?.startsWith(`${root}/`) || bytes > 2 * 1024 * 1024) {
+      throw new Error('Scoped inputs exceed the snapshot budget or include an unsafe path.')
+    }
+    parts.push(file, (await $.fs.read(path, { as: 'bytes' })).base64)
+  }
+  return { fingerprint: await digest(JSON.stringify(parts)), isScoped: true }
+}
+
 async function snapshot($: EngineInterface, root: string): Promise<string> {
   const results = await Promise.all([
     $.process.run(['git', ...['diff', '--no-ext-diff', '--no-textconv', '--binary']], { cwd: root, timeoutMs: 3000 }),
@@ -129,6 +159,24 @@ async function snapshot($: EngineInterface, root: string): Promise<string> {
   }
   // Contents are hashed in memory. Only the digest enters session state.
   return digest(JSON.stringify(parts))
+}
+
+async function refreshEvidence($: EngineInterface, root: string): Promise<void> {
+  const current = await read($, state)
+  let hasUnknown = current.receipts.some(receipt => receipt.status === 'unknown')
+  for (const receipt of current.receipts) {
+    if (receipt.status !== 'passed') continue
+    let fingerprint: string | null = null
+    try { fingerprint = (await evidenceSnapshot($, root, receipt.id)).fingerprint }
+    catch { hasUnknown = true }
+    await update($, state, previous => previous.root !== root ? previous : ({
+      ...previous,
+      receipts: previous.receipts.map(item => item.id !== receipt.id || item.status !== 'passed' ? item
+        : fingerprint === null ? { ...item, status: 'unknown' }
+        : item.snapshot !== fingerprint ? { ...item, status: 'stale' } : item),
+    }))
+  }
+  await set($, { evidenceError: hasUnknown ? 'Evidence inputs unavailable. Freshness is unknown.' : null })
 }
 
 export const register: Register = on => {
@@ -173,13 +221,23 @@ export const register: Register = on => {
 
   on('tool.call', async ($, e, next) => {
     const label = e.tool === 'Bash' && e.run_in_background !== true ? checkLabel(e.command) : null
+    const canMutate = ['Edit', 'Write', 'NotebookEdit'].includes(e.tool) || e.tool === 'Bash'
     const before = await read($, state)
     let fingerprint: string | null = null
     const root = await rootFor($)
     if (root !== before.root) await update($, state, () => initialState(root))
     const started = await read($, state)
-    if (label !== null) {
-      try { fingerprint = await snapshot($, root) }
+    const id = label === null ? null : await digest(e.tool === 'Bash' ? e.command.trim() : label)
+    let isScoped = false
+    if (id !== null || canMutate) {
+      try {
+        if (id === null) fingerprint = await snapshot($, root)
+        else {
+          const captured = await evidenceSnapshot($, root, id)
+          fingerprint = captured.fingerprint
+          isScoped = captured.isScoped
+        }
+      }
       catch { await set($, { evidenceError: 'Worktree snapshot unavailable. Freshness is unknown.' }) }
     }
     const result = await next(e)
@@ -190,23 +248,30 @@ export const register: Register = on => {
       if (background) return result
       const interrupted = output !== null && typeof output === 'object' && (output as Record<string, unknown>).interrupted === true
       let after: string | null = null
-      try { after = await snapshot($, root) }
+      try { after = (await evidenceSnapshot($, root, id!)).fingerprint }
       catch { await set($, { evidenceError: 'Worktree snapshot unavailable. Freshness is unknown.' }) }
       const now = await $.clock.now()
-      const id = await digest(e.tool === 'Bash' ? e.command.trim() : label)
       await update($, state, previous => {
         if (previous.root !== root) return previous
         const status: Receipt['status'] = result.isError === true || result.deny !== undefined || interrupted ? 'failed'
           : fingerprint === null || after === null ? 'unknown'
-          : fingerprint !== after || previous.editVersion !== started.editVersion ? 'stale' : 'passed'
-        return { ...previous, receipts: putReceipt(previous.receipts, { id, label, status, snapshot: after, at: now }) }
+          : fingerprint !== after || (!isScoped && previous.editVersion !== started.editVersion) ? 'stale' : 'passed'
+        return { ...previous, receipts: putReceipt(previous.receipts, { id: id!, label, status, snapshot: after, at: now }) }
       })
-    } else if (result.isError !== true && result.deny === undefined &&
-      (['Edit', 'Write', 'NotebookEdit'].includes(e.tool) || e.tool === 'Bash' && result.isReadOnly !== true)) {
-      await update($, state, previous => ({
-        ...previous, editVersion: previous.editVersion + 1,
-        receipts: previous.receipts.map(item => item.status === 'passed' ? { ...item, status: 'stale' } : item),
-      }))
+      await refreshEvidence($, root)
+    } else if (canMutate) {
+      let after: string | null = null
+      try { after = await snapshot($, root) }
+      catch { await set($, { evidenceError: 'Worktree snapshot unavailable. Freshness is unknown.' }) }
+      await update($, state, previous => {
+        if (previous.root !== root) return previous
+        return {
+          ...previous,
+          evidenceError: after === null ? 'Worktree snapshot unavailable. Freshness is unknown.' : null,
+          editVersion: previous.editVersion + (fingerprint === null || after === null || fingerprint !== after ? 1 : 0),
+        }
+      })
+      await refreshEvidence($, root)
     }
     $.ui.invalidate('ui.render')
     return result

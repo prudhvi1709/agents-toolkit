@@ -4,12 +4,13 @@ import type { On } from 'claude-code'
 function fixture(on: On) {
   const files = new Map<string, string>()
   const store = new Map<string, unknown>()
-  const world = { diff: '', head: 'abc', isFailed: false, isBackground: false, isSnapshotBroken: false, opens: 0, toasts: [] as string[] }
+  const world = { diff: '', nextDiff: null as string | null, head: 'abc', isFailed: false, isBackground: false, isSnapshotBroken: false, opens: 0, toasts: [] as string[] }
   const clock = mock.clock(on, { now: Date.parse('2026-10-03T00:00:00Z') })
   on('session.root', () => ({ value: '/project' }))
   on('process.run', ($, e) => ({ value: {
-    exitCode: world.isSnapshotBroken && e.argv[1] === 'diff' ? 1 : 0,
-    stdout: e.argv.includes('--show-toplevel') ? '/project\n' : e.argv.includes('--verify') ? world.head : e.argv[1] === 'diff' ? world.diff : '',
+    exitCode: world.isSnapshotBroken && ['diff', 'ls-files'].includes(e.argv[1]) ? 1 : 0,
+    stdout: e.argv.includes('--show-toplevel') ? '/project\n' : e.argv.includes('--verify') ? world.head : e.argv[1] === 'diff' ? world.diff : e.argv.includes('--cached') && e.argv[1] === 'ls-files'
+      ? [...files.keys()].map(path => path.replace('/project/', '')).filter(path => e.argv.some(arg => arg.startsWith(':(literal)') && (path === arg.slice(10) || path.startsWith(`${arg.slice(10)}/`)))).join('\0') : '',
     stderr: '', isStdoutTruncated: false, isStderrTruncated: false,
   } }))
   on('fs.exists', ($, e) => ({ value: files.has(e.path) }))
@@ -24,8 +25,11 @@ function fixture(on: On) {
   on('session.start', () => ({ cwd: '/project' }))
   on('session.end', () => ({ sessionId: 'test-session' }))
   on('classic.SessionStart', () => ({}))
-  on('tool.call', () => world.isFailed ? { isError: true, result: 'failed', text: 'failed' }
-    : { result: { stdout: 'ok', stderr: '', interrupted: false, ...(world.isBackground ? { backgroundTaskId: 'background' } : {}) } })
+  on('tool.call', () => {
+    if (world.nextDiff !== null) { world.diff = world.nextDiff; world.nextDiff = null }
+    return world.isFailed ? { isError: true, result: 'failed', text: 'failed' }
+    : { result: { stdout: 'ok', stderr: '', interrupted: false, ...(world.isBackground ? { backgroundTaskId: 'background' } : {}) } }
+  })
   on('ui.render', () => ({ type: 'Text', props: {}, children: ['Existing mod'] }))
   return { files, store, world, clock }
 }
@@ -68,15 +72,49 @@ test('idle companions preserve an existing mod and draw no rows', async ($, on) 
 })
 
 test('a passing check becomes haunted after an edit and fresh after a rerun', async ($, on) => {
-  fixture(on)
+  const { world } = fixture(on)
   await $.tool.call({ tool: 'Bash', command: 'uv run pytest -q', args: '' })
   const ui = await $.ui.mount({ ...band(), surface: 'terminal' })
   expect(await ui.find({ type: 'Text', text: /^Fresh$/ })).toBeDefined()
+  world.nextDiff = 'app.py changed'
   await $.tool.call({ tool: 'Edit', file_path: '/project/app.py', old_string: 'old', new_string: 'new' })
   expect(await ui.find({ text: 'Haunted' })).toBeDefined()
   await $.tool.call({ tool: 'Bash', command: 'uv run pytest -q', args: '' })
   expect(await ui.find({ type: 'Text', text: /^Fresh$/ })).toBeDefined()
   expect(await ui.find({ text: 'Existing mod' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('no-op edits and shell commands preserve passing evidence', async ($, on) => {
+  fixture(on)
+  await $.tool.call({ tool: 'Bash', command: 'pytest', args: '' })
+  const ui = await $.ui.mount({ ...band(), surface: 'terminal' })
+  await $.tool.call({ tool: 'Bash', command: 'echo hello', args: '' })
+  await $.tool.call({ tool: 'Edit', file_path: '/project/app.py', old_string: 'same', new_string: 'same' })
+  expect(await ui.find({ type: 'Text', text: /^Fresh$/ })).toBeDefined()
+  expect(await ui.find({ text: 'Haunted' })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('a failed shell command that changes files still retires evidence', async ($, on) => {
+  const { world } = fixture(on)
+  await $.tool.call({ tool: 'Bash', command: 'pytest', args: '' })
+  world.nextDiff = 'partial write before failure'
+  world.isFailed = true
+  await $.tool.call({ tool: 'Bash', command: 'update-files', args: '' })
+  const ui = await $.ui.mount({ ...band(), surface: 'terminal' })
+  expect(await ui.find({ text: 'Haunted' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('uninspectable edits show unknown instead of claiming stale or fresh', async ($, on) => {
+  const { world } = fixture(on)
+  await $.tool.call({ tool: 'Bash', command: 'pytest', args: '' })
+  world.isSnapshotBroken = true
+  await $.tool.call({ tool: 'Edit', file_path: '/project/app.py', old_string: 'old', new_string: 'new' })
+  const ui = await $.ui.mount({ ...band(), surface: 'terminal' })
+  expect(await ui.find({ text: 'Unknown' })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^Fresh$/ })).toBeUndefined()
   await ui.unmount()
 })
 
@@ -91,6 +129,56 @@ test('external changes and clean commits retire earlier evidence', async ($, on)
   world.head = 'new-commit'
   await $.command.run({ command: 'ghost', args: '' })
   expect(await ui.find({ text: 'Haunted' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('scoped checks ignore unrelated edits but retire on input changes and scope changes', async ($, on) => {
+  const { files, world } = fixture(on)
+  files.set('/project/.claude/companions/evidence.json', JSON.stringify({ checks: [
+    { command: 'pytest', inputs: ['src', 'tests', 'pyproject.toml'] },
+  ] }))
+  files.set('/project/src/app.py', 'old')
+  files.set('/project/pyproject.toml', 'test configuration')
+  await $.tool.call({ tool: 'Bash', command: 'pytest', args: '' })
+  const ui = await $.ui.mount({ ...band(), surface: 'terminal' })
+  world.nextDiff = 'README changed'
+  await $.tool.call({ tool: 'Edit', file_path: '/project/README.md', old_string: 'old', new_string: 'new' })
+  expect(await ui.find({ type: 'Text', text: /^Fresh$/ })).toBeDefined()
+  files.set('/project/src/app.py', 'new')
+  await $.tool.call({ tool: 'Edit', file_path: '/project/src/app.py', old_string: 'old', new_string: 'new' })
+  expect(await ui.find({ text: 'Haunted' })).toBeDefined()
+  files.set('/project/src/app.py', 'old')
+  await $.command.run({ command: 'ghost', args: '' })
+  expect(await ui.find({ text: 'Haunted' })).toBeDefined()
+  await $.tool.call({ tool: 'Bash', command: 'pytest', args: '' })
+  expect(await ui.find({ type: 'Text', text: /^Fresh$/ })).toBeDefined()
+  files.set('/project/tests/new-test.py', 'new test')
+  await $.command.run({ command: 'ghost', args: '' })
+  expect(await ui.find({ text: 'Haunted' })).toBeDefined()
+  await $.tool.call({ tool: 'Bash', command: 'pytest', args: '' })
+  files.set('/project/.claude/companions/evidence.json', JSON.stringify({ checks: [
+    { command: 'pytest', inputs: ['src'] },
+  ] }))
+  await $.command.run({ command: 'ghost', args: '' })
+  expect(await ui.find({ text: 'Haunted' })).toBeDefined()
+  await ui.unmount()
+})
+
+test('invalid scopes fail closed and unmatched commands retain whole-worktree tracking', async ($, on) => {
+  const { files, world } = fixture(on)
+  files.set('/project/.claude/companions/evidence.json', JSON.stringify({ checks: [
+    { command: 'pytest', inputs: ['src'] },
+  ] }))
+  await $.tool.call({ tool: 'Bash', command: 'uv run pytest -q', args: '' })
+  world.diff = 'README edit'
+  await $.command.run({ command: 'ghost', args: '' })
+  const ui = await $.ui.mount({ ...band(), surface: 'terminal' })
+  expect(await ui.find({ text: 'Haunted' })).toBeDefined()
+  await $.tool.call({ tool: 'Bash', command: 'uv run pytest -q', args: '' })
+  files.set('/project/.claude/companions/evidence.json', '{invalid')
+  await $.command.run({ command: 'ghost', args: '' })
+  await $.tool.call({ tool: 'Bash', command: 'pytest', args: '' })
+  expect(await ui.find({ text: 'Unknown' })).toBeDefined()
   await ui.unmount()
 })
 

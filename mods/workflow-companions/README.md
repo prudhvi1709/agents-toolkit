@@ -42,83 +42,50 @@ with the native controls. Focused-pane shortcuts: `g` for evidence, `c` for
 Chai, `h` for Hero (when enabled), `r` to refresh, and `x` to close. Escape also
 closes the pane. The strip's View buttons do not claim typing shortcuts.
 
+## Source layout
+
+Each companion has its own code, focused tests, examples, and illustrative
+assets. The bundle keeps one plugin loader and one shared strip / pane:
+
+```text
+workflow-companions/
+  evidence-ghost/
+  benchmark-chai-stall/
+  hero-fight-club/
+  hooks/                  Shared SDK hooks and UI
+  tests/                  Bundle integration tests
+  types/                  Authored plugin state declarations
+  .claude-plugin/         Bundle manifest
+```
+
+Install the bundle root, not an individual companion folder. Video production,
+recordings, generated audio, renders, and social drafts stay local under the
+Git-ignored `demo-video/` directory.
+
 ## Evidence Ghost
 
-Recognizes simple foreground pytest, npm/pnpm/yarn/bun test and lint commands,
-ruff checks, mypy, ty, tsc, Cargo checks/tests, Go tests, Claude plugin
-validation/tests, and `git diff --check`. It deliberately skips compound shell
-commands, help/list/collection modes, and backgrounded commands.
+Keeps check results tied to the inputs that passed. No-op commands preserve
+freshness; optional per-check file scopes avoid invalidating results after
+unrelated edits. Unconfigured checks watch the whole worktree.
 
-The six most recent distinct commands get separate receipts. Command identity
-is hashed; the UI shows check families rather than recording the raw command.
-Failed checks stay failed until that same command succeeds. A successful tool
-result is marked fresh only when before/after worktree fingerprints agree and
-no observed edit intervened. Checks that change the worktree are stale.
-
-Successful Edit/Write/NotebookEdit calls and Bash calls not marked read-only
-invalidate existing passing receipts conservatively. The timer and each main
-turn also inspect the Git worktree to catch external edits. Snapshots include
-HEAD, staged and unstaged binary diffs, and untracked file contents. They cover
-Git-visible files, not ignored dependencies, environment changes, remote
-systems, or every possible input to a test. Reverting a file does not restore a
-stale receipt; rerun the check.
-
-Snapshots are bounded to 64 untracked files and 2 MiB of their content, with
-three-second Git timeouts. Truncated diffs, unavailable Git, symlinks, or an
-exceeded budget show unknown freshness instead of a green result. Raw source
-contents are hashed in memory and never persisted by this mod. Check receipts
-are session state; they are reset on clear/resume rather than borrowed from
-another conversation. The ghost never runs tests itself.
+See [Evidence Ghost](evidence-ghost/README.md) for supported checks, scope
+configuration, examples, and coverage limits.
 
 ## Benchmark Chai Stall
 
-Have the runner write `.claude/companions/chai.progress.json`, or watch another
-project-relative file:
+Shows completed, waiting, and retrying work, plus the runner's heartbeat.
+Quiet runners are marked Silent; paused and finished jobs keep their own states.
 
-```text
-/chai watch output/evaluation/progress.json
-/chai hide
-/chai show
-```
-
-See `examples/chai.progress.example.json`. Required fields are `name`, `status`,
-`completed`, `total`, and `heartbeat_at`. Optional `retrying` defaults to 0;
-`stale_after_seconds` defaults to 300 and must be 10 to 86400. Counts must be
-non-negative integers: completed cannot exceed total, and retrying cannot
-exceed the unfinished count. `done` requires completed to equal total.
-
-The runner supplies an actual UTC ISO timestamp ending in `Z`. Update it while
-the worker is alive and write the file atomically, using a temporary file plus
-rename. The example timestamp is illustrative; replace it with the current
-time. A heartbeat reports liveness, not completed work. Chai shows both.
-
-The feed refreshes every 15 seconds. A running job becomes Silent after the
-configured heartbeat threshold. Paused, done, and failed jobs keep their own
-states. A heartbeat over a minute into the future shows Clock? rather than
-pretending the job is healthy. Invalid or missing watched feeds replace old
-counts with a visible warning. The mod does not start, restart, or kill jobs.
-
-For this repo, `.claude/companions/` is ignored. Add that ignore rule to other
-repos using the default path, and ignore custom runtime output paths too.
+See [Benchmark Chai Stall](benchmark-chai-stall/README.md) for the progress feed
+schema, example JSON, and heartbeat rules.
 
 ## Hero Fight Club
 
-Copy `examples/hero.example.json` to `.claude/companions/hero.json` in a project
-that needs a comparison. Set `enabled` to false or remove that file to hide it.
-Two to four variants require unique lowercase `id`, `label`, and `description`.
-Optional `desktop` and `mobile` fields name project-relative PNG screenshot
-paths. PNGs must be regular files within the project and at most 2 MiB each.
+Keeps project-opted-in design alternatives and a human-selected reason together.
+Changes to the comparison or screenshots retire the saved choice.
 
-Terminal panes draw screenshots where the terminal supports images, with text
-fallbacks otherwise. Desktop shows their file paths; open those files in your
-usual image viewer. A supplied screenshot is not automatically reviewed or
-scored. Use your existing capture/verification workflow to produce it.
-
-In `/hero`, enter a short reason and press Enter, then choose a variant. The
-choice and reason are saved to Claude's private plugin store per project.
-They survive a new session, but changes to the comparison or screenshot
-contents retire the choice. Copy decision puts the human-confirmed decision on
-the clipboard for a handoff. It does not submit a prompt or edit the design.
+See [Hero Fight Club](hero-fight-club/README.md) for opt-in configuration,
+example comparisons, and screenshot handling.
 
 ## Install and verify
 
@@ -126,6 +93,13 @@ Copy this folder to `~/.claude/mods/workflow-companions`, add that absolute path
 to the colon-separated `env.CLAUDE_CODE_PLUGIN_DIRS` in your local Claude
 settings, and restart Claude Code. Also copy the updated `token-weather` source
 to its installed folder. Keep unrelated settings intact.
+
+Copy the runtime source without local video files or generated SDK declarations:
+
+```bash
+mkdir -p ~/.claude/mods/workflow-companions
+rsync -a --exclude='/demo-video/' --exclude='/.claude-plugin/types/' mods/workflow-companions/ ~/.claude/mods/workflow-companions/
+```
 
 ```bash
 claude plugin validate mods/workflow-companions

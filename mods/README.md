@@ -12,6 +12,12 @@ Claude Code mods kept here for version control:
 See [Workflow companions](workflow-companions/README.md) for activation rules,
 progress feeds, design comparisons, and keyboard controls.
 
+Companion code, tests, examples, and assets are organized in
+[`evidence-ghost`](workflow-companions/evidence-ghost/README.md),
+[`benchmark-chai-stall`](workflow-companions/benchmark-chai-stall/README.md), and
+[`hero-fight-club`](workflow-companions/hero-fight-club/README.md). They share
+one installable `workflow-companions` bundle. Video production files stay local.
+
 The cache countdown is a local estimate based on reported usage and a fixed
 one-hour TTL. It does not query server-side cache expiry.
 
@@ -43,7 +49,8 @@ the repository root:
 ```bash
 mkdir -p ~/.claude/mods
 cp -R mods/token-weather mods/cache-timer mods/token-cost-status ~/.claude/mods/
-cp -R mods/workflow-companions ~/.claude/mods/
+mkdir -p ~/.claude/mods/workflow-companions
+rsync -a --exclude='/demo-video/' --exclude='/.claude-plugin/types/' mods/workflow-companions/ ~/.claude/mods/workflow-companions/
 ```
 
 Restart Claude Code to load the updated mods. This copy preserves generated
