@@ -16,6 +16,12 @@ changes. Inspect only what is needed:
 4. active checkpoint, TODO, deployment manifest, and known limitations;
 5. running local services and port ownership only when the task needs them.
 
+For configuration sync work, run the project's read-only audit for the selected
+category before applying changes. A valid existing config can still conflict
+with generated sections. Resolve duplicate declarations and managed-block
+ownership explicitly; an audit's pending entries do not authorize enabling
+additional tools. Validate generated candidates before writing runtime settings.
+
 Report facts separately from assumptions. If the repository has no reliable
 test or run command, say so. Do not install dependencies, start services,
 change settings, or modify files as part of preflight unless requested.

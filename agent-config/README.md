@@ -55,6 +55,26 @@ After a change, audit and sync that category with `--only`. This avoids
 applying unrelated MCP or hook declarations. Skill edits appear through the
 existing symlinks; a new skill needs the skill-only sync once.
 
+Audits and syncs validate the selected category before changing any target.
+Malformed or duplicate-key JSON, conflicting TOML sections, malformed managed
+MCP markers, and invalid manifest transports stop the command. Diagnostics
+identify the affected file without printing configuration values. Existing
+MCP declarations outside Codex's managed block must have their ownership
+reconciled before sync can append that block; they are not silently replaced.
+Run `uv run scripts/agent-sync.py audit --only mcps` to check MCP candidates.
+
+Validated settings are replaced atomically per file with existing permissions
+and symlinks preserved. This is not a transaction across clients: an I/O failure
+after an earlier replacement can still leave a partially applied sync. Audits
+check serialization and basic manifest structure, not client runtime support,
+server connectivity, or OAuth readiness.
+
+Run the configuration regression tests with:
+
+```bash
+uv run --no-project python -m unittest discover -s scripts/tests -v
+```
+
 ## Supported configuration
 
 The manifest currently manages:
