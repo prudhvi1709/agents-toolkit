@@ -23,6 +23,15 @@ inspiration or generated row to approved without an explicit decision below.
 | --- | --- | --- | --- | --- |
 | Home | | | | |
 
+## Selected UI references
+
+For application screens or a reusable reference collection, add rows only
+for examples that inform the current work. Version labels are not approval.
+
+| Source file/page/frame + version | Purpose / role / state | Review status + decision | Reuse / avoid when | Token authority |
+| --- | --- | --- | --- | --- |
+| | | unknown | | |
+
 ## Assumptions and open questions
 
 | # | Item | Why it's unresolved | Impact if wrong |
@@ -42,7 +51,20 @@ Once a row is logged here, treat it as settled. Do not reopen it in a later
 iteration without new evidence or feedback - log the new evidence as a new
 row with a reason, and point the old row's "superseded by" at it.
 
+## Review corrections
+
+| Reference / screen | Correction | Reason / evidence | Resolution / decision |
+| --- | --- | --- | --- |
+| | | | |
+
+Separate reviewer requests, observed defects and preferences. Retain rejected
+patterns and their reason when they would otherwise be selected again.
+
 ## Iteration log
+
+Iteration budget: state before starting. Stop reason: checks satisfied,
+budget reached, or material decision needed. Record review readiness separately
+from acceptance.
 
 | # | Question this pass answers | Change made | Review feedback | Next question |
 | --- | --- | --- | --- | --- |
@@ -51,3 +73,12 @@ row with a reason, and point the old row's "superseded by" at it.
 One row per pass through the "Iterate and review" loop. "Review feedback"
 records what was actually said or observed, separate from the agent's own
 read of it - never collapse silence into "approved."
+
+## Verification evidence
+
+| Check / artifact | Revision | Viewport / role / state | Result | Invalidated by / next check |
+| --- | --- | --- | --- | --- |
+| | | | unverified | |
+
+Update affected evidence after changes. Link to detailed verification reports
+rather than copying logs or private session transcripts here.

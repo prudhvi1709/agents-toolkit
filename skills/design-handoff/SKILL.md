@@ -14,15 +14,27 @@ implementation handoff.
 The handoff should include:
 
 - goal, audience, and acceptance criteria;
-- authoritative references and screenshot paths;
-- tokens: color, type, spacing, radius, motion, and responsive behavior;
+- selected references and screenshot paths with file/page/frame, version/date, purpose, role,
+  state, review status and supporting decision; keep unknown approval explicit;
+- tokens: color, type, spacing, radius, motion, and responsive behavior, with
+  the governing source; distinguish corporate rules, approved application
+  tokens and merely observed reference values;
 - screen inventory and states, including loading, empty, error, and language
   variants when relevant;
 - component behavior and interaction details;
 - implementation mapping to existing files and backend data;
 - known mismatches, unresolved questions, and an approval gate;
-- verification steps using rendered screenshots, browser checks, and
-  accessibility checks.
+- consequential review corrections, rationale and resolution, including
+  rejected patterns that should not be selected again;
+- verification steps and evidence using rendered screenshots, browser checks,
+  and accessibility checks, tied to artifact revision, viewport and state;
+  mark evidence affected by later changes stale until rechecked.
+
+Explain what each reference contributes and when its pattern would be unsuitable.
+Do not treat version labels, sample business claims or AI-generated feedback as
+approval. Keep a review-ready draft distinct from an accepted design. Use
+`requirement-reconciliation` when incoming feedback changes accepted scope or
+conflicts with the existing handoff; preserve the current record and authorization.
 
 Do not invent visual requirements from a screenshot when the source is
 ambiguous. Mark uncertainty and ask the smallest question that resolves it.

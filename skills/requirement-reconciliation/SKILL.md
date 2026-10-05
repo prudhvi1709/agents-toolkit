@@ -47,6 +47,18 @@ Use these statuses consistently:
 Treat partial coverage as `implemented-unverified` with the missing part stated,
 or split it into separate rows. Do not count a deferred feature as delivered.
 
+When feedback changes a requirement, trace its impact to affected screens,
+components, reference selections, token decisions and verification artifacts.
+Record whether a reference remains suitable for the revised purpose, role and
+state. Keep corporate rules separate from application-specific or unapproved
+values; resolve precedence through source evidence or a recorded decision.
+
+Evidence is scoped to the artifact revision/configuration and checked journey,
+role, viewport and state. Mark affected prior evidence stale after a relevant
+requirement or implementation change; use `implemented-unverified` until the
+affected checks run against the new acceptance conditions. Preserve unaffected
+evidence with its scope. A newer screenshot does not verify interactions.
+
 ## Deliver the reconciliation
 
 Lead with the material scope changes and decisions that affect the next action.
