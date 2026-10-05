@@ -28,6 +28,8 @@ remote-settings.json
 
 # Local research output derived from private agent sessions
 reports/
+/todo.md
+.playwright-mcp/
 
 # Installed runtimes and third-party checkouts
 security/

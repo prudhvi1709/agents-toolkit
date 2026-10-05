@@ -17,7 +17,12 @@ Capture only information needed to resume:
 - changed artifacts with paths and useful line references;
 - blockers and open questions;
 - the next 1-3 concrete actions;
-- verification already run and what remains.
+- verification already run and what remains, with artifact revision and scope
+  (journey, role, viewport or state) or a link to the detailed evidence record;
+- for design work, selected reference locators and review status, governing
+  token sources, confirmed corrections and unresolved approval decisions;
+- the current iteration budget and stopping condition when a review loop is
+  still active.
 
 Before writing, inspect the current diff, status, and existing checkpoint so
 the file reflects reality rather than the previous plan. Update the existing
@@ -27,6 +32,12 @@ short enough to read in under a minute.
 When resuming, read the checkpoint first, verify that referenced files and
 assumptions still exist, then continue from the next action. Mark stale items
 instead of silently treating them as current.
+
+Check whether changes since verification invalidate the evidence being relied
+on. Identify the affected checks to rerun, preserve unaffected evidence with
+its scope, and do not report an old pass as current. Link to the existing
+handoff and requirement record rather than creating provider-specific copies;
+another agent should be able to resume from the same decisions and next action.
 
 Never record credentials, raw prompts, full transcripts, personal data, or
 unverified claims. Ask before converting a tentative idea into a committed

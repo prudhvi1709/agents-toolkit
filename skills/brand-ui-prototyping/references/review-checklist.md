@@ -1,8 +1,8 @@
 # Per-iteration review checklist
 
 Run this against the rendered prototype, not the code, before calling a
-pass done. Every item is pass/fail - record a fail and its fix, not a
-vague "looks okay."
+pass done. Record pass, fail, unverified, or not applicable with its reason;
+keep defects and fixes explicit. Agent review does not establish acceptance.
 
 ## Viewports
 
@@ -29,6 +29,9 @@ by keyboard.
 
 ## Content and hierarchy
 
+Apply the hero checks below to website discovery pages. For operational
+application screens, use the task checks in the next section instead.
+
 - [ ] Headline and supporting line are the confirmed copy, not placeholder
 - [ ] Primary CTA is visually dominant; any secondary CTA is visually quieter
 - [ ] Every CTA's destination resolves (no dead `href="#"`, no 404)
@@ -37,12 +40,26 @@ by keyboard.
 - [ ] Detailed workflow cards / comparison controls are below the hero, not
       competing with it
 
+## Application task and consistency
+
+- [ ] Reference purpose, role and state fit the target screen; its review
+      status and token authority are recorded
+- [ ] The primary task and next action are clear before secondary content
+- [ ] Related fields/actions are grouped and aligned; repeated controls keep
+      consistent labels, dimensions and behavior
+- [ ] Required and optional inputs, validation, and relevant loading, empty,
+      error and permission states are covered
+- [ ] Totals, units, filter effects, denominators and narrative claims agree
+      with the supplied data; sample content stays labeled
+
 ## Brand fidelity
 
 - [ ] Logo file is the approved asset, unmodified (not redrawn, recolored,
       or regenerated)
 - [ ] Color values match the approved tokens exactly (compare hex, not by
       eye)
+- [ ] Fonts and weights match the authoritative source; substitutions and
+      application-specific token departures have an explicit decision
 - [ ] No inspiration-image branding or claim leaked into the copy or visuals
 
 ## Accessibility
@@ -56,6 +73,15 @@ by keyboard.
 - [ ] Theme switcher (if present) is keyboard-operable and visibly focused
 - [ ] Page remains usable with the hero visual removed (visual is additive,
       not load-bearing for comprehension)
+
+## Evidence and stopping condition
+
+- [ ] Screenshots/checks identify the artifact revision, viewport and state;
+      evidence affected by later changes is stale until rechecked
+- [ ] The pass answers its named question; remaining defects, unverified
+      checks and decisions are recorded
+- [ ] The iteration budget and stop reason are recorded; a review-ready draft
+      is distinguished from reviewer acceptance
 
 ## Baseline comparison
 
