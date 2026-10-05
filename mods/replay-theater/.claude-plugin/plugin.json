@@ -1,0 +1,7 @@
+{
+  "name": "replay-theater",
+  "version": "0.1.0",
+  "author": { "name": "Prudhvi Krovvidi" },
+  "description": "Review the last turn's successful file edits one diff at a time.",
+  "types": "./types/index.d.ts"
+}

@@ -61,6 +61,8 @@ the repository owner account.
   list that separates decisions from suggestions.
 - `brand-ui-prototyping` for iterating from approved brand assets and page
   content through homepage hero options, feedback, and themed HTML prototypes.
+- `requirement-reconciliation` for comparing updated scope, reference designs,
+  and stakeholder feedback with the current build and verification evidence.
 
 ### Adapted from upstream workflows
 
