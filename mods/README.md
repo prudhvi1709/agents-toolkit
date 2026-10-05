@@ -8,6 +8,7 @@ Claude Code mods kept here for version control:
 | `cache-timer` | Shows a one-hour countdown, reset after a completed turn reports cache creation or reads. |
 | `token-cost-status` | Shows session cost in USD and current context tokens after each completed turn. |
 | `workflow-companions` | Evidence Ghost, Benchmark Chai Stall, and repo-opt-in Hero Fight Club in one aligned strip and detail pane. |
+| `replay-theater` | Review the last turn's successful Edit/Write changes one diff at a time with `/replay`. |
 
 See [Workflow companions](workflow-companions/README.md) for activation rules,
 progress feeds, design comparisons, and keyboard controls.
@@ -30,6 +31,7 @@ The installed folders live at:
 ~/.claude/mods/cache-timer
 ~/.claude/mods/token-cost-status
 ~/.claude/mods/workflow-companions
+~/.claude/mods/replay-theater
 ```
 
 Claude Code loads them through `env.CLAUDE_CODE_PLUGIN_DIRS` in
@@ -49,6 +51,7 @@ the repository root:
 ```bash
 mkdir -p ~/.claude/mods
 cp -R mods/token-weather mods/cache-timer mods/token-cost-status ~/.claude/mods/
+cp -R mods/replay-theater ~/.claude/mods/
 mkdir -p ~/.claude/mods/workflow-companions
 rsync -a --exclude='/demo-video/' --exclude='/.claude-plugin/types/' mods/workflow-companions/ ~/.claude/mods/workflow-companions/
 ```
@@ -70,6 +73,8 @@ claude plugin validate mods/token-weather
 claude plugin validate mods/cache-timer
 claude plugin validate mods/token-cost-status
 claude plugin validate mods/workflow-companions
+claude plugin validate mods/replay-theater
+claude plugin test mods/replay-theater
 claude plugin test mods/workflow-companions
 claude plugin test mods/token-weather
 git diff --check
@@ -83,3 +88,8 @@ Claude Code session.
 When first installing `workflow-companions`, add its absolute installed path
 to the local `CLAUDE_CODE_PLUGIN_DIRS` value. Later copies need no setting
 change. Hero Fight Club remains off until each project explicitly opts in.
+
+When first installing `replay-theater`, append its absolute installed path to
+that same setting. See [Replay Theater](replay-theater/README.md) for controls,
+capture limits, and validation. Both Replay Theater and Token Weather preserve
+the other mods' bands.

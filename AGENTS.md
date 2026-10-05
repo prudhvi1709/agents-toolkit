@@ -31,6 +31,8 @@ version control.
 ## Agent workflows
 
 - Read the relevant skill instructions completely before applying a skill.
+- Use `requirement-reconciliation` when new references change accepted scope
+  or when requested features need a source-backed coverage check against the build.
 - Separate analysis, generated drafts, and confirmed user decisions.
 - For meeting or transcript workflows, preserve uncertainty and ask for
   confirmation before turning suggestions into commitments.
