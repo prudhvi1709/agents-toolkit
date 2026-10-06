@@ -63,6 +63,8 @@ the repository owner account.
   content through homepage hero options, feedback, and themed HTML prototypes.
 - `requirement-reconciliation` for comparing updated scope, reference designs,
   and stakeholder feedback with the current build and verification evidence.
+- `local-context-search` for source-linked retrieval from explicitly selected
+  local note folders, with stale-source detection and a private SQLite index.
 
 ### Adapted from upstream workflows
 
@@ -103,6 +105,38 @@ requirements. They are not vendored copies of the upstream skills.
   adapted from [AutoHarness](https://github.com/tigerless-labs/autoharness).
   This is a portable, manually invoked workflow; AutoHarness's plugin and
   automatic hooks are not installed.
+
+## Local usage and skill evaluation
+
+Count explicit skill invocations and literal read requests across accessible
+Claude and Codex session logs, without exporting prompts or session identifiers:
+
+```bash
+uv run scripts/audit_agent_activity.py --skills-only
+uv run scripts/audit_agent_activity.py --skills-only --since 2026-10-01T00:00:00Z
+```
+
+This mode prints aggregate JSON and coverage gaps, writes no reports, and does
+not inspect project settings. A request to read a skill does not establish that
+the read succeeded, or that the skill helped. Unsupported commands and log
+formats can be missed; undated records are excluded with `--since`.
+
+For earlier project decisions, use `local-context-search` with explicitly
+selected note roots. The index stays outside Git and makes no network requests.
+For comparing instruction changes, use `skill-learning` and its bundled
+`references/task-evaluation.md`: fixed tasks, baseline/candidate snapshots,
+observable acceptance checks, and held-out examples. No paid evaluation runs
+or external uploads happen automatically.
+
+These are original adaptations of ideas from
+[sanand0/scripts](https://github.com/sanand0/scripts) and
+[promptevals](https://github.com/sanand0/promptevals), not copied source files.
+
+Run the local utility regression checks with:
+
+```bash
+uv run --no-project python -m unittest discover -s scripts/tests
+```
 
 ## Validating skills
 

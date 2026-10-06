@@ -16,6 +16,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from skill_usage import audit_skill_usage, parse_since
+
 
 CATEGORIES = {
     "status_and_polling": re.compile(r"\b(status|progress|where are we|check|poll|tail|log lines|process check)\b", re.I),
@@ -171,7 +173,15 @@ def main() -> int:
     parser.add_argument("--desktop", type=Path, default=Path.home() / "Desktop")
     parser.add_argument("--output", type=Path, default=Path("reports/agent-activity-audit.md"))
     parser.add_argument("--json-output", type=Path, default=Path("reports/agent-activity-audit.json"))
+    parser.add_argument("--skills-only", action="store_true", help="Print aggregate skill-use JSON without writing reports or scanning projects.")
+    parser.add_argument("--since", type=parse_since, help="Timezone-aware ISO timestamp; used only with --skills-only.")
     args = parser.parse_args()
+
+    if args.since is not None and not args.skills_only:
+        parser.error("--since requires --skills-only")
+    if args.skills_only:
+        print(json.dumps(audit_skill_usage(args.home.expanduser().resolve(), since=args.since), indent=2))
+        return 0
 
     home = args.home.expanduser().resolve()
     desktop = args.desktop.expanduser().resolve()
