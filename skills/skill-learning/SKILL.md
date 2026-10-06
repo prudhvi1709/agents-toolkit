@@ -16,6 +16,22 @@ Make useful lessons from real work available to both Claude Code and Codex. This
 
 Keep a concise decision record in the handoff: task class, observed friction, existing skill checked, chosen update or reason to skip, and what later usage would show that the change helped. Never use a synthetic benchmark alone as evidence that a skill is useful.
 
+## Check usage and evaluate changes
+
+- For an adoption review, resolve this skill's directory to the toolkit checkout
+  and run `uv run scripts/audit_agent_activity.py --skills-only` from its root.
+  Add `--since 2026-10-01T00:00:00Z` for a bounded window. Output is aggregate
+  JSON on stdout; this mode writes no reports and does not scan project settings.
+- Distinguish explicit invocation from a request to read `SKILL.md`. Neither
+  proves successful loading or a better outcome. Check coverage errors and
+  representative relevant sessions before changing a skill based on counts.
+  Treat zero detected use as a discovery question, not a reason to delete it.
+- When asked to test whether an update improves outcomes, read
+  [task-evaluation.md](references/task-evaluation.md). Compare fixed task
+  examples against concrete acceptance checks, with a held-out case and an
+  explicit budget. Use the existing provider or agent; this workflow installs
+  no evaluator, runs no paid calls automatically, and changes no global settings.
+
 ## Apply and review
 
 - `agents-toolkit` is the source of truth for shared skills. When a change is requested or otherwise authorized, edit the canonical folder, inspect the diff, and sync only the intended skill links into `~/.claude/skills` and `~/.codex/skills`. Do not overwrite unrelated global folders or settings. Existing user-authored skills take priority.

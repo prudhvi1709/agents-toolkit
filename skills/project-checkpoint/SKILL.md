@@ -33,6 +33,11 @@ When resuming, read the checkpoint first, verify that referenced files and
 assumptions still exist, then continue from the next action. Mark stale items
 instead of silently treating them as current.
 
+When an older decision cannot be located from the checkpoint, use
+`local-context-search` if installed and the relevant note folders are explicitly
+in scope. Read original sources and resolve superseding decisions; an index
+match does not replace the current checkpoint or authorize broader indexing.
+
 Check whether changes since verification invalidate the evidence being relied
 on. Identify the affected checks to rerun, preserve unaffected evidence with
 its scope, and do not report an old pass as current. Link to the existing
