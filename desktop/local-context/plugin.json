@@ -1,0 +1,6 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "local-context",
+  "version": "0.1.0",
+  "description": "Retrieve automatic project knowledge from approved local Claude/Codex history and notes."
+}

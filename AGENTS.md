@@ -31,6 +31,13 @@ version control.
 ## Agent workflows
 
 - Read the relevant skill instructions completely before applying a skill.
+- Use automatic project knowledge through `local-context-search` when a project
+  is registered in the approved local Claude Code/Codex history index. Retrieve
+  a bounded briefing at session start or resume when prior context matters,
+  then check source freshness, superseding decisions and current files. No
+  separate notes folder or repeated skill mention is required. Keep histories,
+  reviewed memories and the Obsidian review vault private. Do not infer approval
+  or automatically expand registered project scope.
 - Use `requirement-reconciliation` when new references change accepted scope
   or when requested features need a source-backed coverage check against the build.
 - Separate analysis, generated drafts, and confirmed user decisions.

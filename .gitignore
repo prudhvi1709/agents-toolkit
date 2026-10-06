@@ -18,6 +18,7 @@ cache/
 *.jsonl
 *.log
 *.lock
+!mcps/local-context/uv.lock
 
 # Local configuration and credentials
 settings.json
