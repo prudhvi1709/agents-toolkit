@@ -14,7 +14,10 @@ changes. Inspect only what is needed:
    secrets;
 3. stack, package manager, test/lint/type-check commands, and entry points;
 4. active checkpoint, TODO, deployment manifest, and known limitations;
-5. running local services and port ownership only when the task needs them.
+5. automatic project knowledge through `local-context-search`, if an approved
+   history index covers the project and earlier context matters: check status,
+   retrieve a bounded project briefing, and verify relevant sources before use;
+6. running local services and port ownership only when the task needs them.
 
 For configuration sync work, run the project's read-only audit for the selected
 category before applying changes. A valid existing config can still conflict
