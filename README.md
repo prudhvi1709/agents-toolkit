@@ -99,6 +99,10 @@ requirements. They are not vendored copies of the upstream skills.
 
 ### Adapted from starred repositories
 
+- `isometric-illustrations` for detailed SVG objects, cutaways, and physical
+  mechanism explainers, adapted from [Anatomy](https://github.com/wheresryan22/anatomy).
+  Includes its MIT drawing kit, optional WebGL layer, and a small example;
+  complements architecture diagrams and interactive explanation workflows.
 - `architecture-diagrams` for source-backed system maps and standalone
   interactive diagrams, adapted from [Archify](https://github.com/tt-a1i/archify).
 - `security-audit` for coverage-led vulnerability reviews with verified
