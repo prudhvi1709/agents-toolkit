@@ -1,0 +1,9 @@
+{
+  "name": "local-context",
+  "displayName": "Local Context",
+  "version": "0.1.0",
+  "description": "Commands and a read-only research subagent for the local-context MCP server: /local-context:brief and /local-context:recall.",
+  "author": { "name": "Prudhvi Krovvidi" },
+  "license": "MIT",
+  "keywords": ["memory", "history", "retrieval", "context"]
+}

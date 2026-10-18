@@ -1,0 +1,17 @@
+{
+  "name": "agents-toolkit",
+  "owner": { "name": "Prudhvi Krovvidi" },
+  "description": "Personal agent plugins: context guard and local context retrieval.",
+  "plugins": [
+    {
+      "name": "ctx-guard",
+      "source": "./plugins/ctx-guard",
+      "description": "Context watch, pre-compaction checkpoint, restore, and /ctx-guard:where."
+    },
+    {
+      "name": "local-context",
+      "source": "./plugins/local-context",
+      "description": "Brief and recall commands plus a read-only research subagent for the local-context MCP."
+    }
+  ]
+}

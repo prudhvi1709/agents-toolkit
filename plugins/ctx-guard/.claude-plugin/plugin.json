@@ -1,0 +1,9 @@
+{
+  "name": "ctx-guard",
+  "displayName": "Context Guard",
+  "version": "0.1.0",
+  "description": "Warns when a session's context grows large, saves a counts-and-paths checkpoint before compaction, restores it afterwards, and answers /ctx-guard:where.",
+  "author": { "name": "Prudhvi Krovvidi" },
+  "license": "MIT",
+  "keywords": ["context", "tokens", "compaction", "checkpoint"]
+}

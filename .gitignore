@@ -35,6 +35,7 @@ reports/
 # Installed runtimes and third-party checkouts
 security/
 plugins/
+!/plugins/
 .venv/
 venv/
 __pycache__/
