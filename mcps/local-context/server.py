@@ -15,6 +15,8 @@ from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
+DateBound = Annotated[str | None, Field(pattern=r"^\d{4}-\d{2}-\d{2}$")]
+
 
 def load_search_module() -> Any:
     """Load the canonical search implementation without copying its logic."""
@@ -195,6 +197,8 @@ def create_server(
         excerpts: bool = False,
         role: Literal["all", "user", "assistant"] = "all",
         max_chars: Annotated[int, Field(ge=500, le=16000)] = 6000,
+        since: DateBound = None,
+        until: DateBound = None,
     ) -> dict[str, Any]:
         """Search indexed history for one project; return locators before excerpts."""
         try:
@@ -206,6 +210,8 @@ def create_server(
                     excerpts=excerpts,
                     role=role,
                     max_chars=max_chars,
+                    since=since,
+                    until=until,
                 )
             )
         except (OSError, UnicodeError, ValueError, sqlite3.Error) as error:
@@ -226,11 +232,56 @@ def create_server(
     def project_brief(
         project: Annotated[str, Field(min_length=1, max_length=4096)],
         max_chars: Annotated[int, Field(ge=500, le=16000)] = 6000,
+        since: DateBound = None,
+        until: DateBound = None,
     ) -> dict[str, Any]:
         """Retrieve reviewed memories and clearly labeled recent project activity."""
         try:
             return dict(
-                history.briefing(history_database, Path(project), max_chars=max_chars)
+                history.briefing(
+                    history_database,
+                    Path(project),
+                    max_chars=max_chars,
+                    since=since,
+                    until=until,
+                )
+            )
+        except (OSError, UnicodeError, ValueError, sqlite3.Error) as error:
+            return failure(error)
+
+    @server.tool(annotations=annotations)
+    def usage_summary(
+        project: Annotated[str, Field(min_length=1, max_length=4096)],
+        since: DateBound = None,
+        until: DateBound = None,
+    ) -> dict[str, Any]:
+        """Count turns per UTC day and provider for one project (default: last 30 days)."""
+        try:
+            return dict(
+                history.usage_summary(
+                    history_database, Path(project), since=since, until=until
+                )
+            )
+        except (OSError, UnicodeError, ValueError, sqlite3.Error) as error:
+            return failure(error)
+
+    @server.tool(annotations=annotations)
+    def list_sessions(
+        project: Annotated[str, Field(min_length=1, max_length=4096)],
+        since: DateBound = None,
+        until: DateBound = None,
+        limit: Annotated[int, Field(ge=1, le=20)] = 10,
+    ) -> dict[str, Any]:
+        """List recent sessions with locators of their last user turns, not text."""
+        try:
+            return dict(
+                history.list_sessions(
+                    history_database,
+                    Path(project),
+                    since=since,
+                    until=until,
+                    limit=limit,
+                )
             )
         except (OSError, UnicodeError, ValueError, sqlite3.Error) as error:
             return failure(error)

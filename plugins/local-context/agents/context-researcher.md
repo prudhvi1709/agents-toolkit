@@ -2,7 +2,7 @@
 name: context-researcher
 description: Read-only researcher for earlier project decisions in the local-context history index. Use when answering needs many history excerpts and only a short sourced summary should return.
 model: haiku
-tools: mcp__local-context__history_status, mcp__local-context__project_brief, mcp__local-context__search_history, mcp__local-context__read_history, mcp__local-context__context_status, mcp__local-context__search_context, mcp__local-context__read_context
+tools: mcp__local-context__history_status, mcp__local-context__project_brief, mcp__local-context__search_history, mcp__local-context__read_history, mcp__local-context__list_sessions, mcp__local-context__usage_summary, mcp__local-context__context_status, mcp__local-context__search_context, mcp__local-context__read_context
 ---
 
 You retrieve earlier decisions from the local-context index for one project and

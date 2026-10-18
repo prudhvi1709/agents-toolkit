@@ -12,7 +12,7 @@ If no topic was given, ask for one and stop.
 
 1. Call `search_history` with `project` set to the current working directory,
    `query` set to the topic, `role` `user` first (requirements and corrections),
-   and excerpts off. Search is literal and AND-matched; retry with a shorter or
+   and excerpts off. Add `since`/`until` (YYYY-MM-DD, UTC) to focus on a period. Search is literal and AND-matched; retry with a shorter or
    alternative wording once before concluding nothing exists.
 2. `read_history` for the two or three most relevant locators only.
 3. Reply with: what was decided or asked, its date, and the locator. Mark

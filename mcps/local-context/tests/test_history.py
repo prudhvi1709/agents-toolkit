@@ -246,6 +246,64 @@ class HistoryTests(unittest.TestCase):
         self.index()
         self.assertEqual(len(self.find("added")["matches"]), 1)
 
+    def test_date_window_usage_summary_and_sessions(self) -> None:
+        def turn(identifier: str, text: str, day: str, session: str) -> dict:
+            record = self.user(text, identifier)
+            record["timestamp"] = f"2026-10-{day}T09:00:00Z"
+            record["sessionId"] = session
+            return record
+
+        self.write(
+            self.claude,
+            [
+                turn("u1", "alpha plan", "01", "s1"),
+                turn("u2", "alpha revision", "05", "s1"),
+                turn("u3", "alpha final", "09", "s2"),
+            ],
+        )
+        self.index()
+        self.assertEqual(len(self.find("alpha")["matches"]), 3)
+        self.assertEqual(len(self.find("alpha", since="2026-10-05")["matches"]), 2)
+        self.assertEqual(len(self.find("alpha", until="2026-10-05")["matches"]), 2)
+        self.assertEqual(
+            len(self.find("alpha", since="2026-10-05", until="2026-10-05")["matches"]),
+            1,
+        )
+        for bad in ({"since": "10/05"}, {"since": "2026-13-01"}, {"until": "x"}):
+            with self.assertRaises(ValueError):
+                self.find("alpha", **bad)
+        with self.assertRaises(ValueError):
+            self.find("alpha", since="2026-10-09", until="2026-10-01")
+        brief = self.history.briefing(self.database, self.project, since="2026-10-09")
+        self.assertEqual(
+            [t["text"] for t in brief["recent_user_turns"]], ["alpha final"]
+        )
+
+        usage = self.history.usage_summary(
+            self.database, self.project, since="2026-10-01", until="2026-10-09"
+        )
+        self.assertEqual(
+            [day["day"] for day in usage["days"]],
+            ["2026-10-01", "2026-10-05", "2026-10-09"],
+        )
+        self.assertEqual(usage["totals"]["user_turns"], 3)
+        self.assertNotIn("alpha", json.dumps(usage))
+        self.assertIn(
+            "since", self.history.usage_summary(self.database, self.project)["window"]
+        )
+
+        listed = self.history.list_sessions(self.database, self.project)["sessions"]
+        self.assertEqual([item["session"] for item in listed], ["s2", "s1"])
+        self.assertEqual(listed[1]["user_turns"], 2)
+        self.assertEqual(len(listed[1]["last_user_turn_ids"]), 2)
+        self.assertNotIn("alpha", json.dumps(listed))
+        with self.assertRaises(ValueError):
+            self.history.list_sessions(self.database, self.project, limit=0)
+        outside = self.home / "elsewhere"
+        outside.mkdir()
+        with self.assertRaises(ValueError):
+            self.history.usage_summary(self.database, outside)
+
     def test_budget_dedup_and_literal_queries(self) -> None:
         self.write(
             self.claude,

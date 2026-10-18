@@ -28,6 +28,10 @@ uv run --frozen --offline --project <toolkit>/mcps/local-context python <script>
 uv run --frozen --offline --project <toolkit>/mcps/local-context python <script> read <turn-id> --part 0
 ```
 
+Add `--since YYYY-MM-DD` / `--until YYYY-MM-DD` (inclusive, UTC) to `search` and
+`brief`. `usage --project P` prints per-day turn counts (default last 30 days)
+and `sessions --project P` lists recent sessions with last-user-turn locators;
+neither returns conversation text.
 Search returns locators by default. Use `--excerpts` only when needed; the
 default selected-record budget is 6000 serialized ASCII characters, not an
 exact model token count. Each read returns at most 3000 characters of source

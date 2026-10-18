@@ -9,6 +9,7 @@ once (the toolkit's `scripts/agent-sync.py` or
 | Piece | What it does |
 | --- | --- |
 | `/local-context:brief` | `history_status` then one bounded `project_brief`, summarized in 12 lines. |
+| `/local-context:handoff [days]` | `list_sessions`, `project_brief` and a few `read_history` calls, folded into a 15-line resume brief across Claude and Codex. |
 | `/local-context:recall <topic>` | Focused `search_history` and `read_history` with dates and supersession checks. |
 | `context-researcher` agent | Read-only, haiku, restricted to the local-context tools; returns under 200 words so excerpts stay out of the main context. |
 

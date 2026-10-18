@@ -127,6 +127,8 @@ class ServerTests(unittest.IsolatedAsyncioTestCase):
                         "search_history",
                         "read_history",
                         "project_brief",
+                        "usage_summary",
+                        "list_sessions",
                     },
                 )
                 self.assertTrue(
@@ -140,6 +142,10 @@ class ServerTests(unittest.IsolatedAsyncioTestCase):
                     "read_context", {"path": str(self.source), "line_count": 81}
                 )
                 self.assertTrue(invalid.is_error)
+                bad_date = await client.call_tool(
+                    "usage_summary", {"project": str(self.root), "since": "10/05"}
+                )
+                self.assertTrue(bad_date.is_error)
 
 
 class SetupTests(unittest.TestCase):

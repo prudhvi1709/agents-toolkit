@@ -6,7 +6,9 @@ canonical skill remains in `skills/local-context-search`; the read-only MCP
 server lives in `mcps/local-context`. It exposes `context_status`,
 `search_context`, and `read_context` for approved notes, plus `history_status`,
 `search_history`, `read_history`, and `project_brief` for approved coding-agent
-history. See the canonical skill's `references/history-memory.md` for CLI scope
+history, plus `usage_summary` (per-day turn counts, no text) and `list_sessions`
+(recent sessions with locators of their last user turns). `search_history` and
+`project_brief` accept inclusive UTC `since`/`until` dates. See the canonical skill's `references/history-memory.md` for CLI scope
 and indexing commands. It cannot rebuild an index, run commands,
 write files, or retrieve arbitrary paths. Reads require an unchanged indexed
 source and return at most 80 lines / 16 KiB. Search excerpts are opt-in.

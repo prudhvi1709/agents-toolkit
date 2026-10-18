@@ -9,7 +9,7 @@ import re
 import sqlite3
 import sys
 from contextlib import closing
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
 
@@ -507,6 +507,26 @@ def selected_project(metadata: dict[str, str], project: Path) -> str:
     raise ValueError("Project is outside the indexed scope")
 
 
+# Inclusive UTC date bounds on the turn alias `t`; an empty bound means unbounded.
+WINDOW_SQL = (
+    "(?='' OR substr(t.timestamp,1,10)>=?) AND (?='' OR substr(t.timestamp,1,10)<=?)"
+)
+
+
+def window(since: str | None, until: str | None) -> tuple[str, str, str, str]:
+    """Validate YYYY-MM-DD bounds and return them as WINDOW_SQL parameters."""
+    bounds = []
+    for value in (since, until):
+        if value is not None:
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+                raise ValueError("Dates must be YYYY-MM-DD")
+            date.fromisoformat(value)
+        bounds.append(value or "")
+    if bounds[0] and bounds[1] and bounds[0] > bounds[1]:
+        raise ValueError("since must not be after until")
+    return bounds[0], bounds[0], bounds[1], bounds[1]
+
+
 def search(
     database: Path,
     query: str,
@@ -517,6 +537,8 @@ def search(
     excerpts: bool = False,
     match: Literal["all", "any"] = "all",
     role: Literal["all", "user", "assistant"] = "all",
+    since: str | None = None,
+    until: str | None = None,
 ) -> dict[str, Any]:
     """Rank by BM25; cap output and remove duplicate passages at retrieval time."""
     words = re.findall(r"\w+", query)
@@ -530,17 +552,19 @@ def search(
     ):
         raise ValueError("Invalid search limits or query")
     fts = (" AND " if match == "all" else " OR ").join(f'"{word}"' for word in words)
+    bounds = window(since, until)
     with closing(open_history(database)) as connection:
         metadata = verify(connection)
         project_name = selected_project(metadata, project)
         rows = connection.execute(
-            """
+            f"""
             SELECT t.id,t.role,t.provider,t.timestamp,c.part,c.text
             FROM chunks c JOIN turns t ON t.id=c.turn_id
             WHERE chunks MATCH ? AND t.project=? AND (?='all' OR t.role=?)
+              AND {WINDOW_SQL}
             ORDER BY bm25(chunks),t.timestamp DESC LIMIT 100
         """,
-            (fts, project_name, role, role),
+            (fts, project_name, role, role, *bounds),
         ).fetchall()
         matches: list[dict[str, Any]] = []
         seen: set[str] = set()
@@ -645,10 +669,18 @@ def remember(
     return {"id": identifier, "status": "confirmed" if confirmed else "candidate"}
 
 
-def briefing(database: Path, project: Path, *, max_chars: int = 6000) -> dict[str, Any]:
+def briefing(
+    database: Path,
+    project: Path,
+    *,
+    max_chars: int = 6000,
+    since: str | None = None,
+    until: str | None = None,
+) -> dict[str, Any]:
     """Prioritize reviewed memories, then offer clearly labeled recent user turns."""
     if not 500 <= max_chars <= 16000:
         raise ValueError("Invalid briefing budget")
+    bounds = window(since, until)
     with closing(open_history(database)) as connection:
         metadata = verify(connection)
         project_name = selected_project(metadata, project)
@@ -673,8 +705,8 @@ def briefing(database: Path, project: Path, *, max_chars: int = 6000) -> dict[st
                 memories.append(item)
                 used += size
         turns = connection.execute(
-            "SELECT id,timestamp,text FROM turns WHERE project=? AND role='user' ORDER BY timestamp DESC LIMIT 30",
-            (project_name,),
+            f"SELECT t.id,t.timestamp,t.text FROM turns t WHERE t.project=? AND t.role='user' AND {WINDOW_SQL} ORDER BY t.timestamp DESC LIMIT 30",
+            (project_name, *bounds),
         ).fetchall()
         seen = set()
         for row in turns:
@@ -704,6 +736,83 @@ def briefing(database: Path, project: Path, *, max_chars: int = 6000) -> dict[st
     }
 
 
+def usage_summary(
+    database: Path,
+    project: Path,
+    *,
+    since: str | None = None,
+    until: str | None = None,
+) -> dict[str, Any]:
+    """Count turns per UTC day and provider; no text, no identifiers."""
+    if since is None:
+        since = (datetime.now(UTC).date() - timedelta(days=29)).isoformat()
+    bounds = window(since, until)
+    with closing(open_history(database)) as connection:
+        project_name = selected_project(verify(connection), project)
+        rows = connection.execute(
+            f"""
+            SELECT substr(t.timestamp,1,10) AS day,t.provider,
+              SUM(t.role='user') AS user_turns,SUM(t.role='assistant') AS assistant_turns,
+              COUNT(DISTINCT t.session) AS sessions
+            FROM turns t WHERE t.project=? AND t.timestamp IS NOT NULL AND {WINDOW_SQL}
+            GROUP BY day,t.provider ORDER BY day,t.provider LIMIT 800
+        """,
+            (project_name, *bounds),
+        ).fetchall()
+    days = [dict(row) for row in rows]
+    totals = {
+        key: sum(day[key] for day in days)
+        for key in ("user_turns", "assistant_turns", "sessions")
+    }
+    return {
+        "window": {"since": since, "until": until},
+        "days": days,
+        "totals": totals,
+        "limitation": "Counts only, UTC dates, indexed scope only. Sessions are summed per day and provider, so a session spanning days is counted on each.",
+    }
+
+
+def list_sessions(
+    database: Path,
+    project: Path,
+    *,
+    since: str | None = None,
+    until: str | None = None,
+    limit: int = 10,
+) -> dict[str, Any]:
+    """List recent sessions with locators of their last user turns, not text."""
+    if not 1 <= limit <= 20:
+        raise ValueError("Invalid session limit")
+    bounds = window(since, until)
+    with closing(open_history(database)) as connection:
+        project_name = selected_project(verify(connection), project)
+        rows = connection.execute(
+            f"""
+            SELECT t.session,t.provider,MIN(t.timestamp) AS started,MAX(t.timestamp) AS ended,
+              SUM(t.role='user') AS user_turns,SUM(t.role='assistant') AS assistant_turns
+            FROM turns t WHERE t.project=? AND t.timestamp IS NOT NULL AND {WINDOW_SQL}
+            GROUP BY t.session,t.provider ORDER BY ended DESC LIMIT ?
+        """,
+            (project_name, *bounds, limit),
+        ).fetchall()
+        sessions = []
+        for row in rows:
+            item = dict(row)
+            item["last_user_turn_ids"] = [
+                turn["id"]
+                for turn in connection.execute(
+                    "SELECT id FROM turns WHERE project=? AND session=? AND role='user' "
+                    "ORDER BY timestamp DESC LIMIT 5",
+                    (project_name, row["session"]),
+                )
+            ]
+            sessions.append(item)
+    return {
+        "sessions": sessions,
+        "limitation": "Locators only; read each turn separately. User text may be a proposal, not a decision.",
+    }
+
+
 def main() -> int:
     """Provide local write commands and bounded read commands."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -725,12 +834,25 @@ def main() -> int:
     find.add_argument("--match", choices=["all", "any"], default="all")
     find.add_argument("--role", choices=["all", "user", "assistant"], default="all")
     find.add_argument("--max-chars", type=int, default=6000)
+    find.add_argument("--since", help="UTC date YYYY-MM-DD, inclusive")
+    find.add_argument("--until", help="UTC date YYYY-MM-DD, inclusive")
     read = commands.add_parser("read")
     read.add_argument("id")
     read.add_argument("--part", type=int, default=0)
     brief = commands.add_parser("brief")
     brief.add_argument("--project", type=Path, required=True)
     brief.add_argument("--max-chars", type=int, default=6000)
+    brief.add_argument("--since", help="UTC date YYYY-MM-DD, inclusive")
+    brief.add_argument("--until", help="UTC date YYYY-MM-DD, inclusive")
+    usage = commands.add_parser("usage")
+    usage.add_argument("--project", type=Path, required=True)
+    usage.add_argument("--since", help="default: 29 days ago")
+    usage.add_argument("--until")
+    sessions = commands.add_parser("sessions")
+    sessions.add_argument("--project", type=Path, required=True)
+    sessions.add_argument("--since")
+    sessions.add_argument("--until")
+    sessions.add_argument("--limit", type=int, default=10)
     memory = commands.add_parser("remember")
     memory.add_argument("--project", type=Path, required=True)
     memory.add_argument("--kind", choices=sorted(KINDS), required=True)
@@ -758,11 +880,31 @@ def main() -> int:
                     match=args.match,
                     role=args.role,
                     max_chars=args.max_chars,
+                    since=args.since,
+                    until=args.until,
                 )
             case "read":
                 result = read_turn(args.db, args.id, part=args.part)
             case "brief":
-                result = briefing(args.db, args.project, max_chars=args.max_chars)
+                result = briefing(
+                    args.db,
+                    args.project,
+                    max_chars=args.max_chars,
+                    since=args.since,
+                    until=args.until,
+                )
+            case "usage":
+                result = usage_summary(
+                    args.db, args.project, since=args.since, until=args.until
+                )
+            case "sessions":
+                result = list_sessions(
+                    args.db,
+                    args.project,
+                    since=args.since,
+                    until=args.until,
+                    limit=args.limit,
+                )
             case "remember":
                 result = remember(
                     args.db,
