@@ -27,6 +27,13 @@ CODEX_HOOKS = HOME / ".codex" / "hooks.json"
 CLAUDE_SETTINGS = HOME / ".claude" / "settings.json"
 MARKER_START = "# BEGIN agents-toolkit managed MCP servers"
 MARKER_END = "# END agents-toolkit managed MCP servers"
+INSTRUCTIONS_START = "<!-- BEGIN agents-toolkit shared guidance -->"
+INSTRUCTIONS_END = "<!-- END agents-toolkit shared guidance -->"
+INSTRUCTIONS_SOURCE = ROOT / "agent-config" / "shared-agent-guidance.md"
+INSTRUCTIONS_TARGETS = (
+    HOME / ".claude" / "CLAUDE.md",
+    HOME / ".codex" / "AGENTS.md",
+)
 
 
 def load_manifest() -> dict:
@@ -199,6 +206,43 @@ def write_config(path: Path, text: str) -> None:
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+
+
+def render_shared_instructions(existing: str, shared: str, path: Path) -> str:
+    """Replace only the marked shared block, preserving client-specific text."""
+    start_count = existing.count(INSTRUCTIONS_START)
+    end_count = existing.count(INSTRUCTIONS_END)
+    if start_count != end_count or start_count > 1:
+        raise ValueError(f"Invalid shared instruction markers in {path}")
+    if INSTRUCTIONS_START in shared or INSTRUCTIONS_END in shared:
+        raise ValueError("Shared instruction source contains reserved markers")
+    block = f"{INSTRUCTIONS_START}\n{shared.strip()}\n{INSTRUCTIONS_END}"
+    if not start_count:
+        separator = "" if existing.endswith("\n") else "\n"
+        return f"{existing}{separator}{block}\n"
+    start = existing.index(INSTRUCTIONS_START)
+    end = existing.index(INSTRUCTIONS_END) + len(INSTRUCTIONS_END)
+    return f"{existing[:start]}{block}{existing[end:]}"
+
+
+def sync_shared_instructions(path: Path, apply: bool) -> list[str]:
+    """Update the common guidance block without replacing the full global file."""
+    if not path.is_file():
+        raise ValueError(f"Expected an existing global instruction file at {path}")
+    shared = INSTRUCTIONS_SOURCE.read_text(encoding="utf-8")
+    existing = path.read_text(encoding="utf-8")
+    updated = render_shared_instructions(existing, shared, path)
+    if updated == existing:
+        return [f"OK instructions {path}"]
+    changes = []
+    if apply:
+        backup = backup_path(path)
+        shutil.copy2(path, backup)
+        backup.chmod(0o600)
+        write_config(path, updated)
+        changes.append(f"BACKUP {path} -> {backup}")
+    changes.append(f"SET instructions {path}")
+    return changes
 
 
 def render_json_servers(manifest: dict, client: str) -> dict:
@@ -394,12 +438,20 @@ def run(apply: bool, only: str, client: str = "all") -> int:
     if only in {"all", "hooks"}:
         sync_hooks(CLAUDE_SETTINGS, "claude_code", False)
         sync_hooks(CODEX_HOOKS, "codex", False)
-    if only in {"all", "skills"}:
+    if only in {"all", "instructions", "agent-assets"}:
+        for path in INSTRUCTIONS_TARGETS:
+            sync_shared_instructions(path, False)
+    if only in {"all", "skills", "agent-assets"}:
         skills = source_skills()
         print(f"Source: {ROOT}\nSkills: {len(skills)}")
         for target in (CLAUDE_SKILLS, CODEX_SKILLS):
             print(f"\n[{ 'sync' if apply else 'audit' }] {target}")
             for line in sync_skill_target(target, skills, apply):
+                print(line)
+    if only in {"all", "instructions", "agent-assets"}:
+        print("\n[Shared instructions]")
+        for path in INSTRUCTIONS_TARGETS:
+            for line in sync_shared_instructions(path, apply):
                 print(line)
     if only in {"all", "mcps"}:
         print(f"Source: {ROOT}")
@@ -435,7 +487,11 @@ def main() -> int:
     parser.add_argument(
         "command", choices=("audit", "diff", "sync", "validate"), nargs="?", default="audit"
     )
-    parser.add_argument("--only", choices=("all", "skills", "mcps", "hooks"), default="all")
+    parser.add_argument(
+        "--only",
+        choices=("all", "agent-assets", "skills", "instructions", "mcps", "hooks"),
+        default="all",
+    )
     parser.add_argument(
         "--client",
         choices=("all", "claude_code", "claude_desktop", "codex"),

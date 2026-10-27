@@ -17,18 +17,32 @@ non-coding agents.
 - `desktop/local-context/` documents the scoped, read-only context bridge and
   personal desktop plugin setup. Its server is in `mcps/local-context/`.
 
-Run `scripts/agent-sync.py audit` to inspect drift. Sync a single category with
-`scripts/agent-sync.py sync --only skills`, `--only mcps`, or `--only hooks`.
+Run `scripts/agents-toolkit-sync` to sync shared skills and the managed shared
+guidance block to Claude Code and Codex. Run `scripts/agents-toolkit-sync audit`
+to check them without changes. Personal and client-specific guidance outside
+the marked block stays local. Use `scripts/agent-sync.py` for explicit MCP and
+hook operations.
 
 ### Syncing agents
 
-The repository is the source of truth for shared skills and MCPs:
+The repository is the source of truth for shared skills and generic shared
+guidance. MCP and hook configuration remain separate:
 
 ```bash
 ./scripts/agent-sync.py audit  # read-only drift check
+./scripts/agent-sync.py sync --only agent-assets  # skills and shared guidance
 ./scripts/agent-sync.py sync --only skills  # link skills only
+./scripts/agent-sync.py sync --only instructions  # shared guidance only
 ./scripts/agent-sync.py sync --only mcps    # merge MCP entries only
 ./scripts/agent-sync.py sync --only hooks   # apply hook adapters only
+```
+
+For a short global command on this Mac, link the wrapper into `~/bin` once:
+
+```bash
+ln -s "$(pwd)/scripts/agents-toolkit-sync" "$HOME/bin/agents-toolkit-sync"
+agents-toolkit-sync       # sync shared skills and guidance
+agents-toolkit-sync audit # check them without changes
 ```
 
 The sync command updates Claude Code, Claude Desktop, and Codex without

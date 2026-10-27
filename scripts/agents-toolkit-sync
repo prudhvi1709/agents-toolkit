@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+SOURCE=$0
+while [ -L "$SOURCE" ]; do
+    SOURCE_DIR=$(CDPATH= cd -P -- "$(dirname -- "$SOURCE")" && pwd)
+    TARGET=$(readlink "$SOURCE")
+    case "$TARGET" in
+        /*) SOURCE=$TARGET ;;
+        *) SOURCE=$SOURCE_DIR/$TARGET ;;
+    esac
+done
+SCRIPT_DIR=$(CDPATH= cd -P -- "$(dirname -- "$SOURCE")" && pwd)
+
+if [ "$#" -eq 0 ]; then
+    set -- sync --only agent-assets
+elif [ "$#" -eq 1 ]; then
+    case "$1" in
+        audit|diff|sync)
+            set -- "$1" --only agent-assets
+            ;;
+    esac
+fi
+
+exec python3 "$SCRIPT_DIR/agent-sync.py" "$@"

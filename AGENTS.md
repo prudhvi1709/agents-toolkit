@@ -31,6 +31,17 @@ version control.
 ## Agent workflows
 
 - Read the relevant skill instructions completely before applying a skill.
+- When a code change adds or changes a user-facing capability, review its
+  supporting agent assets before finishing: skill triggers and guidance, hook
+  behavior, MCP contracts and permissions, Claude/Codex/plugin adapters,
+  upstream attribution, examples, and setup documentation. Update only pieces
+  whose behavior or setup changed; briefly note when none need updating. Keep
+  shared skills and MCP declarations canonical in this toolkit, and check
+  generated client configuration with `scripts/agent-sync.py validate`.
+- After changing a skill, run the repository skill validator documented in the
+  README. Run focused checks for changed runtime behavior; CI validates
+  manifests, skills, sync scripts, and the local-context server. Do not sync
+  global skills or enable hooks/MCPs unless requested.
 - Use automatic project knowledge through `local-context-search` when a project
   is registered in the approved local Claude Code/Codex history index. Retrieve
   a bounded briefing at session start or resume when prior context matters,

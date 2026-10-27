@@ -22,6 +22,7 @@ jobs:
           python-version: "3.12"
       - run: uv sync --project mcps/local-context --all-groups --frozen
       - run: uv run --project mcps/local-context python scripts/agent-sync.py validate
+      - run: uv run --script scripts/validate_skills.py skills --fail-on error
       - run: uv run --project mcps/local-context python -m unittest discover -s scripts/tests -v
       - run: uv run --project mcps/local-context python -m unittest discover -s mcps/local-context/tests -v
       - run: uv run --project mcps/local-context ruff check --select F,E4,E7,E9 scripts mcps/local-context
