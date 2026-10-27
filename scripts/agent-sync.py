@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import shlex
@@ -52,6 +51,20 @@ def load_manifest() -> dict:
                 or not config[transport[0]].strip()
             ):
                 raise ValueError(f"Expected one non-empty MCP command or URL in {MANIFEST}")
+            if (
+                client == "claude_code"
+                and "url" in config
+                and config.get("type") not in {"http", "sse"}
+            ):
+                raise ValueError(
+                    f"Claude Code remote MCP '{name}' must declare type http or sse"
+                )
+            if "type" in config and config["type"] not in {"stdio", "http", "sse"}:
+                raise ValueError(f"Invalid MCP transport type for '{name}' in {client}")
+            if config.get("type") in {"http", "sse"} and "url" not in config:
+                raise ValueError(f"Remote MCP '{name}' must use a URL in {client}")
+            if config.get("type") == "stdio" and "command" not in config:
+                raise ValueError(f"Stdio MCP '{name}' must use a command in {client}")
             if "args" in config and (
                 not isinstance(config["args"], list)
                 or any(not isinstance(arg, str) for arg in config["args"])
@@ -194,8 +207,21 @@ def render_json_servers(manifest: dict, client: str) -> dict:
         config = server.get(client)
         if not config or config.get("managed_by") == "official-plugin":
             continue
-        result[name] = {key: value for key, value in config.items() if key != "type"}
+        result[name] = resolve_runtime_paths(config)
+        if client != "claude_code":
+            result[name].pop("type", None)
     return result
+
+
+def resolve_runtime_paths(value: object) -> object:
+    """Expand the one portable checkout token used by local MCP commands."""
+    if isinstance(value, str):
+        return value.replace("${AGENTS_TOOLKIT_ROOT}", str(ROOT))
+    if isinstance(value, list):
+        return [resolve_runtime_paths(item) for item in value]
+    if isinstance(value, dict):
+        return {key: resolve_runtime_paths(item) for key, item in value.items()}
+    return value
 
 
 def sync_json_config(path: Path, client: str, apply: bool) -> list[str]:
@@ -341,13 +367,30 @@ def sync_hooks(path: Path, client: str, apply: bool) -> list[str]:
     return [f"SET hooks {path}"]
 
 
-def run(apply: bool, only: str) -> int:
+def run(apply: bool, only: str, client: str = "all") -> int:
     # Preflight the whole selected category before any target is changed.
     # Writes are atomic per file, not a transaction across all clients.
+    if client != "all" and only != "mcps":
+        raise ValueError("--client can only be used with --only mcps")
+    json_clients = {
+        "claude_code": ("Claude Code", CLAUDE_JSON, "claude_code"),
+        "claude_desktop": ("Claude Desktop", DESKTOP_JSON, "claude_desktop"),
+    }
+    selected_clients = (
+        list(json_clients.values())
+        if client == "all"
+        else [json_clients[client]]
+        if client in json_clients
+        else []
+    )
+    include_codex = client in {"all", "codex"}
+    if not selected_clients and not include_codex:
+        raise ValueError(f"Unsupported MCP client: {client}")
     if only in {"all", "mcps"}:
-        sync_json_config(CLAUDE_JSON, "claude_code", False)
-        sync_json_config(DESKTOP_JSON, "claude_desktop", False)
-        sync_codex_config(False)
+        for _, path, client_name in selected_clients:
+            sync_json_config(path, client_name, False)
+        if include_codex:
+            sync_codex_config(False)
     if only in {"all", "hooks"}:
         sync_hooks(CLAUDE_SETTINGS, "claude_code", False)
         sync_hooks(CODEX_HOOKS, "codex", False)
@@ -360,35 +403,98 @@ def run(apply: bool, only: str) -> int:
                 print(line)
     if only in {"all", "mcps"}:
         print(f"Source: {ROOT}")
-        for label, path, client in (("Claude Code", CLAUDE_JSON, "claude_code"), ("Claude Desktop", DESKTOP_JSON, "claude_desktop")):
+        for label, path, client_name in selected_clients:
             print(f"\n[{label}]")
-            for line in sync_json_config(path, client, apply):
+            for line in sync_json_config(path, client_name, apply):
                 print(line)
-        print("\n[Codex]")
-        for line in sync_codex_config(apply):
-            print(line)
+        if include_codex:
+            print("\n[Codex]")
+            for line in sync_codex_config(apply):
+                print(line)
     if only in {"all", "hooks"}:
         print(f"Source: {ROOT}\n[Hooks]")
         hook_targets = (
             ("Claude Code", CLAUDE_SETTINGS, "claude_code"),
             ("Codex", CODEX_HOOKS, "codex"),
         )
-        for label, path, client in hook_targets:
+        for label, path, hook_client in hook_targets:
             print(f"[{label}]")
-            for line in sync_hooks(path, client, apply):
+            for line in sync_hooks(path, hook_client, apply):
                 print(line)
     if not apply:
-        print(f"\nDry run only. Run `scripts/agent-sync.py sync --only {only}` to apply changes.")
+        client_option = "" if client == "all" else f" --client {client}"
+        print(
+            f"\nDry run only. Run `scripts/agent-sync.py sync --only {only}"
+            f"{client_option}` to apply changes."
+        )
     return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("audit", "diff", "sync"), nargs="?", default="audit")
+    parser.add_argument(
+        "command", choices=("audit", "diff", "sync", "validate"), nargs="?", default="audit"
+    )
     parser.add_argument("--only", choices=("all", "skills", "mcps", "hooks"), default="all")
+    parser.add_argument(
+        "--client",
+        choices=("all", "claude_code", "claude_desktop", "codex"),
+        default="all",
+        help="Limit MCP audit/sync to one client; valid only with --only mcps",
+    )
     args = parser.parse_args()
     try:
-        return run(args.command == "sync", args.only)
+        if args.command == "validate":
+            manifest = load_manifest()
+            load_hook_manifest()
+            upstreams = read_json(ROOT / "agent-config" / "upstreams.json")
+            if upstreams.get("version") != 1 or not isinstance(
+                upstreams.get("sources"), list
+            ):
+                raise ValueError("Invalid upstream inventory")
+            for source in upstreams["sources"]:
+                if not isinstance(source, dict) or not all(
+                    isinstance(source.get(key), str) and source[key]
+                    for key in (
+                        "name",
+                        "repository",
+                        "revision",
+                        "license",
+                        "form",
+                        "boundary",
+                    )
+                ):
+                    raise ValueError("Invalid upstream source entry")
+                if (
+                    not isinstance(source.get("adapted_files"), list)
+                    or not source["adapted_files"]
+                ):
+                    raise ValueError("Upstream source must list adapted files")
+                for relative in source["adapted_files"]:
+                    relative_path = Path(relative) if isinstance(relative, str) else None
+                    if (
+                        relative_path is None
+                        or relative_path.is_absolute()
+                        or ".." in relative_path.parts
+                        or not (ROOT / relative_path).exists()
+                    ):
+                        raise ValueError(f"Upstream source path does not exist: {relative}")
+            for client in ("claude_code", "claude_desktop"):
+                json.dumps({"mcpServers": render_json_servers(manifest, client)})
+            validate_toml(render_codex_block(manifest), CODEX_CONFIG)
+            for relative in (
+                ".claude-plugin/marketplace.json",
+                "desktop/local-context/plugin.json",
+            ):
+                if not (ROOT / relative).is_file():
+                    raise ValueError(f"Required plugin manifest is missing: {relative}")
+                read_json(ROOT / relative)
+            print(
+                f"Repository manifests valid: {len(source_skills())} canonical skills, "
+                f"{len(upstreams['sources'])} tracked upstream sources"
+            )
+            return 0
+        return run(args.command == "sync", args.only, args.client)
     except (ValueError, OSError) as err:
         print(f"Configuration sync failed: {err}", file=sys.stderr)
         return 1

@@ -98,10 +98,16 @@ def extract_text(record: Envelope, provider: str) -> tuple[str, str] | None:
     # These injected instruction/context envelopes are not conversational evidence.
     if text.lstrip().startswith(
         (
+            "<heartbeat>",
             "<environment_context>",
             "<INSTRUCTIONS>",
             "# AGENTS.md instructions",
             "<system-reminder>",
+            "<local-command-caveat>",
+            "<task-notification>",
+            "<auto-review>",
+            "<approval-review>",
+            "<approval_request>",
         )
     ):
         return None
@@ -720,6 +726,7 @@ def briefing(
                 "text": text,
                 "status": "unreviewed_user_turn",
             }
+            item.update(locator(connection, row["id"]))
             size = len(json.dumps(item, ensure_ascii=True))
             if used + size <= max_chars:
                 recent.append(item)

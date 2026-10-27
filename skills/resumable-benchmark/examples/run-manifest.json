@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "run_id": "YYYY-MM-DD-example",
+  "created_at_utc": "YYYY-MM-DDThh:mm:ssZ",
+  "input": {
+    "snapshot_id": "private-or-public-dataset-version",
+    "sha256": "<input-snapshot-sha256>",
+    "item_ids": ["<stable-item-id>"]
+  },
+  "implementation": {
+    "git_revision": "<commit-or-working-tree-fingerprint>",
+    "prompt_template_sha256": "<prompt-template-sha256>",
+    "configuration_sha256": "<generation-and-judge-config-sha256>"
+  },
+  "models": {
+    "provider": "<provider>",
+    "model": "<exact-model-id>",
+    "generation_settings": {},
+    "judge_model": "<exact-judge-model-id-or-null>"
+  },
+  "evaluation": {
+    "criteria_version": "<criteria-revision>",
+    "metrics": ["<metric-and-definition>"],
+    "acceptance_criteria": ["<decision-threshold-or-qualitative-rule>"]
+  },
+  "execution": {
+    "output_directory": "<private-output-location>",
+    "retry_policy": "<bounded-policy>",
+    "stopping_condition": "<condition>",
+    "command": "<reproduction-command>"
+  },
+  "artifacts": {
+    "results": "<result-artifact-reference>",
+    "comparison": "<comparison-report-reference>"
+  }
+}

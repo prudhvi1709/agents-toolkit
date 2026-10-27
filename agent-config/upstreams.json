@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "name": "Archify",
+      "repository": "https://github.com/tt-a1i/archify",
+      "revision": "0e4949f",
+      "license": "MIT",
+      "form": "workflow adaptation, not vendored code",
+      "adapted_files": ["skills/architecture-diagrams/SKILL.md"],
+      "boundary": "Use its typed-diagram and evidence ideas without claiming its renderer or validation."
+    },
+    {
+      "name": "AutoHarness",
+      "repository": "https://github.com/tigerless-labs/autoharness",
+      "revision": "f74a9fb",
+      "license": "MIT",
+      "form": "manual skill adaptation, not vendored code",
+      "adapted_files": ["skills/skill-learning/SKILL.md"],
+      "boundary": "Keep learning manually invoked; no autonomous hooks or MCP server."
+    },
+    {
+      "name": "Motion AI Kit",
+      "repository": "https://github.com/motiondivision/ai-kit",
+      "revision": "d1c5c26",
+      "license": "MIT",
+      "form": "adapted skill",
+      "adapted_files": ["skills/motion/SKILL.md"],
+      "boundary": "ASCII adaptation; retain local routing, accessibility, security, and project policy."
+    },
+    {
+      "name": "Anatomy",
+      "repository": "https://github.com/wheresryan22/anatomy",
+      "revision": "689dcf966e63d92be10a5d593c6e19e10acd4422",
+      "license": "MIT",
+      "form": "vendored adaptation",
+      "adapted_files": ["skills/isometric-illustrations"],
+      "boundary": "Keep the local SVG/WebGL scope and security wrapper; beta 3D runtime remains excluded."
+    }
+  ]
+}

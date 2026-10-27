@@ -84,5 +84,10 @@ uv run scripts/context_search.py search 'approved logo'
 - A changed, missing, unreadable, or out-of-scope source is stale. Rebuild the
   selected roots before relying on its old indexed text; preserve uncertainty
   when the original cannot be reached. Reconcile conflicting scope before edits.
+- A missing source is a coverage gap, not proof that cached evidence is corrupt
+  or disposable. Preserve cached turns and reviewed memories; do not delete or
+  replace the private database just to reduce a missing-source count. Report
+  cached-only provenance and recover originals only from the already approved
+  source scope.
 - If the index or FTS5 is unavailable, report that gap and search the selected
   folders with `rg`. Do not install an MCP, upload notes, or expand source scope.

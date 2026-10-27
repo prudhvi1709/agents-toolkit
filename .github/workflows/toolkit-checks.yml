@@ -1,0 +1,27 @@
+name: Toolkit checks
+
+on:
+  pull_request:
+  push:
+    branches: [Main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: mcps/local-context/uv.lock
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --project mcps/local-context --all-groups --frozen
+      - run: uv run --project mcps/local-context python scripts/agent-sync.py validate
+      - run: uv run --project mcps/local-context python -m unittest discover -s scripts/tests -v
+      - run: uv run --project mcps/local-context python -m unittest discover -s mcps/local-context/tests -v
+      - run: uv run --project mcps/local-context ruff check --select F,E4,E7,E9 scripts mcps/local-context

@@ -12,6 +12,10 @@ scripts/agent-sync.py sync --only mcps    # apply MCP declarations only
 scripts/agent-sync.py sync --only hooks   # apply hook adapters only
 ```
 
+When one client's MCP ownership needs separate reconciliation, scope an audit
+or sync with `--only mcps --client claude_code`, `claude_desktop`, or `codex`.
+The default remains all clients and preflights the full selected category.
+
 Skills are linked into each client. Existing conflicting skill directories are
 moved to `~/.agent-sync-backups/` before linking. Unrelated settings remain
 untouched. MCP entries are merged into each native config; credentials and
@@ -25,6 +29,9 @@ OAuth state are never stored here.
   configure separately.
 - MCP servers: add one entry to `mcps.json`. The sync command renders each
   client's native config while preserving unrelated servers and credentials.
+  Use `${AGENTS_TOOLKIT_ROOT}` for arguments that point into this checkout; the
+  renderer expands this token at audit or sync time. Claude Code keeps its
+  required transport `type`; clients that infer transport omit that field.
 - Hooks: keep reusable scripts under `hooks/` and event/handler adapters in
   `agent-config/hooks.json`. Add an adapter for each client because hook event schemas and
   execution behavior differ. The sync command only manages entries pointing
@@ -75,14 +82,28 @@ Run the configuration regression tests with:
 uv run --no-project python -m unittest discover -s scripts/tests -v
 ```
 
+Run `scripts/agent-sync.py validate` for a read-only repository check of MCP
+and hook manifests, client renderings, plugin metadata, canonical skills, and
+the vendored-source inventory. This check does not inspect or modify personal
+client settings.
+
 ## Supported configuration
 
 The manifest currently manages:
 
 - CodeGraphContext through `uvx` on all three clients.
 - Postman Minimal through its remote URL on all three clients.
+- The local-context stdio server for Claude Code, using this checkout's pinned
+  offline environment. Codex and Claude Desktop use their existing local
+  marketplace and desktop setup adapters.
+- Motion through its remote URL for Claude Code and Codex. Motion+ remains
+  optional and requires account access.
 - Figma through the official Claude Code plugin, the Claude Desktop remote
   server, and the Codex remote server.
+
+Adapted upstream sources and their boundaries are listed in
+[`upstreams.json`](upstreams.json). Review source changes selectively and retain
+the local license and policy adaptations.
 
 Existing MCP servers and hooks that are not owned by this toolkit are
 preserved. Restart each client after syncing, then complete any first-use OAuth

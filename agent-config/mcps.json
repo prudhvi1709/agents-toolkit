@@ -13,6 +13,22 @@
       "claude_desktop": {"url": "https://mcp.postman.com/minimal"},
       "codex": {"url": "https://mcp.postman.com/minimal"}
     },
+    "local-context": {
+      "description": "Scoped read-only retrieval from approved local project history",
+      "claude_code": {
+        "type": "stdio",
+        "command": "uv",
+        "args": [
+          "run",
+          "--frozen",
+          "--offline",
+          "--project",
+          "${AGENTS_TOOLKIT_ROOT}/mcps/local-context",
+          "python",
+          "${AGENTS_TOOLKIT_ROOT}/mcps/local-context/server.py"
+        ]
+      }
+    },
     "figma": {
       "description": "Design context, tokens, components, and design-to-code workflows",
       "claude_code": {"managed_by": "official-plugin", "plugin": "figma@claude-plugins-official", "url": "https://mcp.figma.com/mcp"},

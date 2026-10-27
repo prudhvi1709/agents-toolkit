@@ -10,6 +10,14 @@ IDs, configuration, model/provider, output directory, retry policy, stopping
 condition, and acceptance criteria. Never mix results from incompatible
 configurations without labeling them.
 
+For evaluations that compare prompts or models, also record stable hashes for
+the input snapshot, prompt/template, and code revision; provider and exact model
+identifier; generation and judge settings; metric definitions; and links to the
+result artifacts. Keep private inputs and outputs in the project's approved
+private storage. A comparison is descriptive unless the design controls the
+other relevant differences; do not attribute a change to one factor without
+that evidence. See [the run manifest example](examples/run-manifest.json).
+
 For each item, persist an atomic result and an explicit state such as
 `pending`, `running`, `succeeded`, `failed`, or `skipped`. On restart, validate
 the manifest and resume only pending or retryable items. Do not rerun
